@@ -428,7 +428,7 @@ public class Calculator
 }";
         var projectContentsMutants = MutateAndCompileSource(sourceFile);
         // those results can change if mutators are added.
-        projectContentsMutants.Count(t => t.ResultStatus == MutantStatus.CompileError).ShouldBe(9);
+        projectContentsMutants.Count(t => t.ResultStatus == MutantStatus.CompileError).ShouldBe(15);
         projectContentsMutants.Count(t => t.ResultStatus == MutantStatus.Pending).ShouldBe(0);
     }
 

@@ -74,7 +74,7 @@ namespace StrykerNet.UnitTest.Mutants.TestResources
         int A { get; set; }
         int B { get; set; }
         void MethodA() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-            var three = (StrykerNamespace.MutantControl.IsActive(1)?1 - 2:1 + 2);
+            var three = (StrykerNamespace.MutantControl.IsActive(1)?1 - 2:(StrykerNamespace.MutantControl.IsActive(3)?0:(StrykerNamespace.MutantControl.IsActive(2)?-1:1 ))+ (StrykerNamespace.MutantControl.IsActive(5)?0:(StrykerNamespace.MutantControl.IsActive(4)?-2:2)));
         }}
     }
 }";
@@ -132,7 +132,7 @@ namespace StrykerNet.UnitTest.Mutants.TestResources
         var source =
             @"public static int operator+ (TestClass value, TestClass other) => Sub(out var x, """")?1:2;";
         var expected =
-            @"public static int operator+ (TestClass value, TestClass other) {if(StrykerNamespace.MutantControl.IsActive(1)){return(false?1:2);}else{if(StrykerNamespace.MutantControl.IsActive(0)){return(true?1:2);}else{return Sub(out var x, (StrykerNamespace.MutantControl.IsActive(2)?""Stryker was here!"":""""))?1:2;}}}";
+            @"public static int operator+ (TestClass value, TestClass other) {if(StrykerNamespace.MutantControl.IsActive(1)){return(false?1:2);}else{if(StrykerNamespace.MutantControl.IsActive(0)){return(true?1:2);}else{return Sub(out var x, (StrykerNamespace.MutantControl.IsActive(2)?""Stryker was here!"":""""))?(StrykerNamespace.MutantControl.IsActive(4)?0:(StrykerNamespace.MutantControl.IsActive(3)?-1:1)):(StrykerNamespace.MutantControl.IsActive(6)?0:(StrykerNamespace.MutantControl.IsActive(5)?-2:2));}}}";
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
@@ -161,7 +161,7 @@ namespace StrykerNet.UnitTest.Mutants.TestResources
 int SomeMethod()  => (true && SomeOtherMethod(out var x)) ? x : 5;
 }";
         var expected = @"void TestMethod(){if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-int SomeMethod()  {if(StrykerNamespace.MutantControl.IsActive(2)){return(false?x :5);}else{if(StrykerNamespace.MutantControl.IsActive(1)){return(true?x :5);}else{if(StrykerNamespace.MutantControl.IsActive(3)){return(true || SomeOtherMethod(out var x)) ? x : 5;}else{return((StrykerNamespace.MutantControl.IsActive(4)?false:true )&& SomeOtherMethod(out var x)) ? x : 5;}}}};
+int SomeMethod()  {if(StrykerNamespace.MutantControl.IsActive(2)){return(false?x :5);}else{if(StrykerNamespace.MutantControl.IsActive(1)){return(true?x :5);}else{if(StrykerNamespace.MutantControl.IsActive(3)){return(true || SomeOtherMethod(out var x)) ? x : 5;}else{return ((StrykerNamespace.MutantControl.IsActive(4)?false:true )&& SomeOtherMethod(out var x)) ? x : (StrykerNamespace.MutantControl.IsActive(6)?0:(StrykerNamespace.MutantControl.IsActive(5)?-5:5));}}}};
 }}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -206,7 +206,7 @@ private bool Out(out string test)
 	return true;
 }";
         var expected = @"void TestMethod()
-{if(StrykerNamespace.MutantControl.IsActive(0)){}else{if(StrykerNamespace.MutantControl.IsActive(19)){
+{if(StrykerNamespace.MutantControl.IsActive(0)){}else{if(StrykerNamespace.MutantControl.IsActive(40)){
 	int i = 0;
 	if (i + 8 == 8)
 	{
@@ -235,7 +235,7 @@ private bool Out(out string test)
 		return x + 1;
 	}
 }
-else{if(StrykerNamespace.MutantControl.IsActive(16)){
+else{if(StrykerNamespace.MutantControl.IsActive(35)){
 	int i = 0;
 	if (i + 8 == 8)
 	{
@@ -265,38 +265,38 @@ else{if(StrykerNamespace.MutantControl.IsActive(16)){
 	}
 }
 else{
-	int i = 0;
-	if ((StrykerNamespace.MutantControl.IsActive(1)?i + 8 != 8:(StrykerNamespace.MutantControl.IsActive(2)?i - 8 :i + 8 )== 8))
-{if(StrykerNamespace.MutantControl.IsActive(3)){}else	{
-		i = (StrykerNamespace.MutantControl.IsActive(4)?i - 1:i + 1);
-		if ((StrykerNamespace.MutantControl.IsActive(5)?i + 8 != 9:(StrykerNamespace.MutantControl.IsActive(6)?i - 8 :i + 8 )== 9))
-{if(StrykerNamespace.MutantControl.IsActive(7)){}else		{
-			i = (StrykerNamespace.MutantControl.IsActive(8)?i - 1:i + 1);
+	int i = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
+	if ((StrykerNamespace.MutantControl.IsActive(2)?i + 8 != 8:(StrykerNamespace.MutantControl.IsActive(3)?i - 8 :i + (StrykerNamespace.MutantControl.IsActive(5)?0:(StrykerNamespace.MutantControl.IsActive(4)?-8:8 )))== (StrykerNamespace.MutantControl.IsActive(7)?0:(StrykerNamespace.MutantControl.IsActive(6)?-8:8))))
+{if(StrykerNamespace.MutantControl.IsActive(8)){}else	{
+		i = (StrykerNamespace.MutantControl.IsActive(9)?i - 1:i + (StrykerNamespace.MutantControl.IsActive(11)?0:(StrykerNamespace.MutantControl.IsActive(10)?-1:1)));
+		if ((StrykerNamespace.MutantControl.IsActive(12)?i + 8 != 9:(StrykerNamespace.MutantControl.IsActive(13)?i - 8 :i + (StrykerNamespace.MutantControl.IsActive(15)?0:(StrykerNamespace.MutantControl.IsActive(14)?-8:8 )))== (StrykerNamespace.MutantControl.IsActive(17)?0:(StrykerNamespace.MutantControl.IsActive(16)?-9:9))))
+{if(StrykerNamespace.MutantControl.IsActive(18)){}else		{
+			i = (StrykerNamespace.MutantControl.IsActive(19)?i - 1:i + (StrykerNamespace.MutantControl.IsActive(21)?0:(StrykerNamespace.MutantControl.IsActive(20)?-1:1)));
 		}};
 	}
 }	else
-{if(StrykerNamespace.MutantControl.IsActive(9)){}else	{
-		i = (StrykerNamespace.MutantControl.IsActive(10)?i - 3:i + 3);
-		if ((StrykerNamespace.MutantControl.IsActive(11)?i != i + i - 8:i == (StrykerNamespace.MutantControl.IsActive(12)?i + i + 8:(StrykerNamespace.MutantControl.IsActive(13)?i - i :i + i )- 8)))
-{if(StrykerNamespace.MutantControl.IsActive(14)){}else		{
-			i = (StrykerNamespace.MutantControl.IsActive(15)?i - 1:i + 1);
+{if(StrykerNamespace.MutantControl.IsActive(22)){}else	{
+		i = (StrykerNamespace.MutantControl.IsActive(23)?i - 3:i + (StrykerNamespace.MutantControl.IsActive(25)?0:(StrykerNamespace.MutantControl.IsActive(24)?-3:3)));
+		if ((StrykerNamespace.MutantControl.IsActive(26)?i != i + i - 8:i == (StrykerNamespace.MutantControl.IsActive(27)?i + i + 8:(StrykerNamespace.MutantControl.IsActive(28)?i - i :i + i )- (StrykerNamespace.MutantControl.IsActive(30)?0:(StrykerNamespace.MutantControl.IsActive(29)?-8:8)))))
+{if(StrykerNamespace.MutantControl.IsActive(31)){}else		{
+			i = (StrykerNamespace.MutantControl.IsActive(32)?i - 1:i + (StrykerNamespace.MutantControl.IsActive(34)?0:(StrykerNamespace.MutantControl.IsActive(33)?-1:1)));
 		}};
 	}
 }
 	if (!Out(out var test))
-{if(StrykerNamespace.MutantControl.IsActive(17)){}else	{
-		return (StrykerNamespace.MutantControl.IsActive(18)?i - 1:i + 1);
+{if(StrykerNamespace.MutantControl.IsActive(36)){}else	{
+		return (StrykerNamespace.MutantControl.IsActive(37)?i - 1:i + (StrykerNamespace.MutantControl.IsActive(39)?0:(StrykerNamespace.MutantControl.IsActive(38)?-1:1)));
 	}
 }
 	if (i is int x)
-{if(StrykerNamespace.MutantControl.IsActive(20)){}else	{
-		return (StrykerNamespace.MutantControl.IsActive(21)?x - 1:x + 1);
+{if(StrykerNamespace.MutantControl.IsActive(41)){}else	{
+		return (StrykerNamespace.MutantControl.IsActive(42)?x - 1:x + (StrykerNamespace.MutantControl.IsActive(44)?0:(StrykerNamespace.MutantControl.IsActive(43)?-1:1)));
 	}
 }}
 }}}
 private bool Out(out string test)
-{{test= default(string);}if(StrykerNamespace.MutantControl.IsActive(22)){}else{
-	return (StrykerNamespace.MutantControl.IsActive(23)?false:true);
+{{test= default(string);}if(StrykerNamespace.MutantControl.IsActive(45)){}else{
+	return (StrykerNamespace.MutantControl.IsActive(46)?false:true);
 }return default(bool);}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -360,21 +360,21 @@ private bool Out(out string test)
 	   return true;
 }";
         var expected = @"void TestMethod()
-{if(StrykerNamespace.MutantControl.IsActive(0)){}else{if(StrykerNamespace.MutantControl.IsActive(2)){
+{if(StrykerNamespace.MutantControl.IsActive(0)){}else{if(StrykerNamespace.MutantControl.IsActive(3)){
 	int i = 0;
 	var result = (false?test :"""");
 }
-else{if(StrykerNamespace.MutantControl.IsActive(1)){
+else{if(StrykerNamespace.MutantControl.IsActive(2)){
 	int i = 0;
 	var result = (true?test :"""");
 }
 else{
-	int i = 0;
-	var result = Out(out var test) ? test : (StrykerNamespace.MutantControl.IsActive(3)?""Stryker was here!"":"""");
+	int i = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
+	var result = Out(out var test) ? test : (StrykerNamespace.MutantControl.IsActive(4)?""Stryker was here!"":"""");
 }
 }}}private bool Out(out string test)
-{{test= default(string);}if(StrykerNamespace.MutantControl.IsActive(4)){}else{
-	   return (StrykerNamespace.MutantControl.IsActive(5)?false:true);
+{{test= default(string);}if(StrykerNamespace.MutantControl.IsActive(5)){}else{
+	   return (StrykerNamespace.MutantControl.IsActive(6)?false:true);
 }return default(bool);}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -395,12 +395,12 @@ private bool Out(int test, Func<int, bool>lambda )
 ";
         var expected = @"void TestMethod()
 {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-	int i = 0;
-	var result = (StrykerNamespace.MutantControl.IsActive(2)?(false?i.ToString() :""""):(StrykerNamespace.MutantControl.IsActive(1)?(true?i.ToString() :""""):Out(i, (x) => {if(StrykerNamespace.MutantControl.IsActive(3)){}else{ int.TryParse((StrykerNamespace.MutantControl.IsActive(4)?"""":""3""), out int y); return (StrykerNamespace.MutantControl.IsActive(5)?x != y:x == y);} return default;}) ? i.ToString() : (StrykerNamespace.MutantControl.IsActive(6)?""Stryker was here!"":"""")));
+	int i = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
+	var result = (StrykerNamespace.MutantControl.IsActive(3)?(false?i.ToString() :""""):(StrykerNamespace.MutantControl.IsActive(2)?(true?i.ToString() :""""):Out(i, (x) => {if(StrykerNamespace.MutantControl.IsActive(4)){}else{ int.TryParse((StrykerNamespace.MutantControl.IsActive(5)?"""":""3""), out int y); return (StrykerNamespace.MutantControl.IsActive(6)?x != y:x == y);} return default;}) ? i.ToString() : (StrykerNamespace.MutantControl.IsActive(7)?""Stryker was here!"":"""")));
 }
 }private bool Out(int test, Func<int, bool>lambda )
-{if(StrykerNamespace.MutantControl.IsActive(7)){}else{
-	return (StrykerNamespace.MutantControl.IsActive(8)?false:true);
+{if(StrykerNamespace.MutantControl.IsActive(8)){}else{
+	return (StrykerNamespace.MutantControl.IsActive(9)?false:true);
 }
 return default(bool);}";
 
@@ -418,8 +418,8 @@ return default(bool);}";
 ";
         var expected = @"void TestMethod()
 {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-	int i = 0;
-	var result = Out(i, (x) => (StrykerNamespace.MutantControl.IsActive(2)?(false?true :false):(StrykerNamespace.MutantControl.IsActive(1)?(true?true :false):int.TryParse((StrykerNamespace.MutantControl.IsActive(3)?"""":""3""), out int y) ? (StrykerNamespace.MutantControl.IsActive(4)?false:true ): (StrykerNamespace.MutantControl.IsActive(5)?true:false))));
+	int i = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
+	var result = Out(i, (x) => (StrykerNamespace.MutantControl.IsActive(3)?(false?true :false):(StrykerNamespace.MutantControl.IsActive(2)?(true?true :false):int.TryParse((StrykerNamespace.MutantControl.IsActive(4)?"""":""3""), out int y) ? (StrykerNamespace.MutantControl.IsActive(5)?false:true ): (StrykerNamespace.MutantControl.IsActive(6)?true:false))));
 }
 }";
 
@@ -437,9 +437,10 @@ return default(bool);}";
 ";
         var expected = @"void TestMethod()
 {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-	int i = 0;
-	var result = Out(i, (x) => {if(StrykerNamespace.MutantControl.IsActive(1)){}else{if ((StrykerNamespace.MutantControl.IsActive(4)?!(x>2):(StrykerNamespace.MutantControl.IsActive(3)?x>=2:(StrykerNamespace.MutantControl.IsActive(2)?x<2:x>2)))) return (StrykerNamespace.MutantControl.IsActive(5)?true:false); if(StrykerNamespace.MutantControl.IsActive(6)){;}else{if(StrykerNamespace.MutantControl.IsActive(7)){i--;}else{i++;}}}return default;});}}
-";
+	int i = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
+	var result = Out(i, (x) => {if(StrykerNamespace.MutantControl.IsActive(2)){}else{if ((StrykerNamespace.MutantControl.IsActive(5)?!(x>2):(StrykerNamespace.MutantControl.IsActive(4)?x>=2:(StrykerNamespace.MutantControl.IsActive(3)?x<2:x>(StrykerNamespace.MutantControl.IsActive(7)?0:(StrykerNamespace.MutantControl.IsActive(6)?-2:2)))))) return (StrykerNamespace.MutantControl.IsActive(8)?true:false); if(StrykerNamespace.MutantControl.IsActive(9)){;}else{if(StrykerNamespace.MutantControl.IsActive(10)){i--;}else{i++;}}}return default;});
+}
+}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -455,15 +456,16 @@ return default(bool);}";
 				return $""test{1 + test3}"";
 			};
 		}";
-        var expected = @"void TestMethod()
+        var expected = """
+void TestMethod()
 {if(StrykerNamespace.MutantControl.IsActive(0)){}else		{
-			string SomeLocalFunction()
+        string SomeLocalFunction()
 {if(StrykerNamespace.MutantControl.IsActive(1)){}else			{
-				var test3 = (StrykerNamespace.MutantControl.IsActive(2)?2 - 5:2 + 5);
-				return (StrykerNamespace.MutantControl.IsActive(3)?$"""":$""test{(StrykerNamespace.MutantControl.IsActive(4) ? 1 - test3 : 1 + test3)}"");
-
-            }return default(string);};
-}}";
+            var test3 = (StrykerNamespace.MutantControl.IsActive(2)?2 - 5:(StrykerNamespace.MutantControl.IsActive(4)?0:(StrykerNamespace.MutantControl.IsActive(3)?-2:2 ))+ (StrykerNamespace.MutantControl.IsActive(6)?0:(StrykerNamespace.MutantControl.IsActive(5)?-5:5)));
+            return (StrykerNamespace.MutantControl.IsActive(7)?$"":$"test{(StrykerNamespace.MutantControl.IsActive(8)?1 - test3:(StrykerNamespace.MutantControl.IsActive(10)?0:(StrykerNamespace.MutantControl.IsActive(9)?-1:1 ))+ test3)}");
+        }return default(string);};
+    }}
+""";
 
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -510,7 +512,7 @@ return default(bool);}";
         var source =
             @"public static IEnumerable<int> Foo() => new int[] { }.ToArray()!.Any(x => x==1)?.OrderBy(e => e).ToList();";
         var expected =
-            @"public static IEnumerable<int> Foo() => (StrykerNamespace.MutantControl.IsActive(2)?new int[] { }.ToArray()!.Any(x => x==1)?.OrderByDescending(e => e).ToList():(StrykerNamespace.MutantControl.IsActive(0)?new int[] { }.ToArray()!.All(x => x==1):new int[] { }.ToArray()!.Any(x => (StrykerNamespace.MutantControl.IsActive(1)?x!=1:x==1)))?.OrderBy(e => e).ToList());";
+            @"public static IEnumerable<int> Foo() => (StrykerNamespace.MutantControl.IsActive(4)?new int[] { }.ToArray()!.Any(x => x==1)?.OrderByDescending(e => e).ToList():(StrykerNamespace.MutantControl.IsActive(0)?new int[] { }.ToArray()!.All(x => x==1):new int[] { }.ToArray()!.Any(x => (StrykerNamespace.MutantControl.IsActive(1)?x!=1:x==(StrykerNamespace.MutantControl.IsActive(3)?0:(StrykerNamespace.MutantControl.IsActive(2)?-1:1)))))?.OrderBy(e => e).ToList());";
 
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -546,15 +548,14 @@ var employeePerson = (StrykerNamespace.MutantControl.IsActive(1)?group.FirstOrDe
             public string ExampleBugMethod()
             {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
                 string someString = (StrykerNamespace.MutantControl.IsActive(1)?"Stryker was here!":"");
-                return (StrykerNamespace.MutantControl.IsActive(2) ? someString.Replace("ab", "cd").Replace("12", "34").PadRight(12).Replace("12", "34") :
-                someString.Replace(
-                    (StrykerNamespace.MutantControl.IsActive(3)?"":"ab"), (StrykerNamespace.MutantControl.IsActive(4)?"":"cd")
-                ).Replace(
-                    (StrykerNamespace.MutantControl.IsActive(5)?"":"12"), (StrykerNamespace.MutantControl.IsActive(6)?"":"34")
-                ).PadLeft(12).Replace(
-                    (StrykerNamespace.MutantControl.IsActive(7)?"":"12"), (StrykerNamespace.MutantControl.IsActive(8)?"":"34")
-                ));
-            }return default(string);}}
+                return (StrykerNamespace.MutantControl.IsActive(2)?someString.Replace("ab", "cd")
+                    .Replace("12", "34")
+                    .PadRight(12)
+                    .Replace("12", "34"):someString.Replace((StrykerNamespace.MutantControl.IsActive(3)?"":"ab"), (StrykerNamespace.MutantControl.IsActive(4)?"":"cd"))
+                    .Replace((StrykerNamespace.MutantControl.IsActive(5)?"":"12"), (StrykerNamespace.MutantControl.IsActive(6)?"":"34"))
+                    .PadLeft((StrykerNamespace.MutantControl.IsActive(8)?0:(StrykerNamespace.MutantControl.IsActive(7)?-12:12)))
+                    .Replace((StrykerNamespace.MutantControl.IsActive(9)?"":"12"), (StrykerNamespace.MutantControl.IsActive(10)?"":"34")));
+            }return default(string);}
             """;
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -570,7 +571,7 @@ int[] test = { 1 };
             @"public int[] Foo(){if(StrykerNamespace.MutantControl.IsActive(0)){}else{if(StrykerNamespace.MutantControl.IsActive(1)){
 int[] test = {};
 }else{
-int[] test = { 1 };
+int[] test = { (StrykerNamespace.MutantControl.IsActive(3)?0:(StrykerNamespace.MutantControl.IsActive(2)?-1:1 ))};
 }}}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -581,7 +582,7 @@ int[] test = { 1 };
     {
         var source = @"public int[] Foo() => new int[] { 1 };";
         var expected =
-            @"public int[] Foo() => (StrykerNamespace.MutantControl.IsActive(0)?new int[] {}:new int[] { 1 });";
+            @"public int[] Foo() => (StrykerNamespace.MutantControl.IsActive(0)?new int[] {}:new int[] { (StrykerNamespace.MutantControl.IsActive(2)?0:(StrykerNamespace.MutantControl.IsActive(1)?-1:1 ))});";
 
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -591,7 +592,7 @@ int[] test = { 1 };
     {
         var source = @"public int[] Foo() => new List<int> { 1 };";
         var expected =
-            @"public int[] Foo() => (StrykerNamespace.MutantControl.IsActive(0)?new List<int> {}:new List<int> { 1 });";
+            @"public int[] Foo() => (StrykerNamespace.MutantControl.IsActive(0)?new List<int> {}:new List<int> { (StrykerNamespace.MutantControl.IsActive(2)?0:(StrykerNamespace.MutantControl.IsActive(1)?-1:1 ))});";
 
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -600,7 +601,7 @@ int[] test = { 1 };
     public void ShouldNotMutateImplicitArrayCreationProperties()
     {
         var source = @"public int[] Foo() => new [] { 1 };";
-        var expected = @"public int[] Foo() => new [] { 1 };";
+        string expected = @"public int[] Foo() => new [] { (StrykerNamespace.MutantControl.IsActive(1)?0:(StrykerNamespace.MutantControl.IsActive(0)?-1:1 ))};";
 
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -609,7 +610,7 @@ int[] test = { 1 };
     public void ShouldNotMutateImplicitArrayCreation()
     {
         var source = "public static readonly int[] Foo =  { 1 };";
-        var expected = "public static readonly int[] Foo =  { 1 };";
+        string expected = "public static readonly int[] Foo =  { (StrykerNamespace.MutantControl.IsActive(2)?0:(StrykerNamespace.MutantControl.IsActive(1)?-1:1 ))};";
 
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -631,9 +632,8 @@ int[] test = { 1 };
 var (one, two) = (1 + 1, """");
 }";
         var expected = @"public void TestMethod() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-var (one, two) = ((StrykerNamespace.MutantControl.IsActive(1)?1 - 1:1 + 1), (StrykerNamespace.MutantControl.IsActive(2)?""Stryker was here!"":""""));
-}
-    }";
+var (one, two) = ((StrykerNamespace.MutantControl.IsActive(1)?1 - 1:(StrykerNamespace.MutantControl.IsActive(3)?0:(StrykerNamespace.MutantControl.IsActive(2)?-1:1 ))+ (StrykerNamespace.MutantControl.IsActive(5)?0:(StrykerNamespace.MutantControl.IsActive(4)?-1:1))), (StrykerNamespace.MutantControl.IsActive(6)?""Stryker was here!"":""""));
+}}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -652,7 +652,7 @@ var (one, two) = ((StrykerNamespace.MutantControl.IsActive(1)?1 - 1:1 + 1), (Str
     {
         var source = @"Span<ushort> kindaUnrelated = stackalloc ushort[] { 0 };";
         var expected =
-            @"Span<ushort> kindaUnrelated = (StrykerNamespace.MutantControl.IsActive(0)?stackalloc ushort[] {}:stackalloc ushort[] { 0 });";
+            @"Span<ushort> kindaUnrelated = (StrykerNamespace.MutantControl.IsActive(0)?stackalloc ushort[] {}:stackalloc ushort[] { (StrykerNamespace.MutantControl.IsActive(1)?42:0 )});";
 
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -690,9 +690,9 @@ for (var i = 0; i < 10; i++)
 { }
 }";
         var expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-if(StrykerNamespace.MutantControl.IsActive(3)){for (var i = 0; i < 10; i--)
+if(StrykerNamespace.MutantControl.IsActive(6)){for (var i = 0; i < 10; i--)
 { }
-}else{for (var i = 0; (StrykerNamespace.MutantControl.IsActive(2)?i <= 10:(StrykerNamespace.MutantControl.IsActive(1)?i > 10:i < 10)); i++)
+}else{for (var i = (StrykerNamespace.MutantControl.IsActive(1)?42:0); (StrykerNamespace.MutantControl.IsActive(3)?i <= 10:(StrykerNamespace.MutantControl.IsActive(2)?i > 10:i < (StrykerNamespace.MutantControl.IsActive(5)?0:(StrykerNamespace.MutantControl.IsActive(4)?-10:10)))); i++)
 { }
 }}}";
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -706,9 +706,9 @@ for (var i = 0; ; i++)
 { }
 }";
         var expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-if(StrykerNamespace.MutantControl.IsActive(1)){for (var i = 0; ; i--)
+if(StrykerNamespace.MutantControl.IsActive(2)){for (var i = 0; ; i--)
 { }
-}else{for (var i = 0; ; i++)
+}else{for (var i = (StrykerNamespace.MutantControl.IsActive(1)?42:0); ; i++)
 { }
 }}}";
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -735,7 +735,7 @@ if(StrykerNamespace.MutantControl.IsActive(2)){for (var i = Method(true); ; i--)
     {
         var source = @"public int SomeMethod()  => (true && SomeOtherMethod(out var x)) ? x : 5;";
         var expected =
-            @"public int SomeMethod()  {if(StrykerNamespace.MutantControl.IsActive(1)){return(false?x :5);}else{if(StrykerNamespace.MutantControl.IsActive(0)){return(true?x :5);}else{if(StrykerNamespace.MutantControl.IsActive(2)){return(true || SomeOtherMethod(out var x)) ? x : 5;}else{return ((StrykerNamespace.MutantControl.IsActive(3)?false:true )&& SomeOtherMethod(out var x)) ? x : 5;}}}}";
+            @"public int SomeMethod()  {if(StrykerNamespace.MutantControl.IsActive(1)){return(false?x :5);}else{if(StrykerNamespace.MutantControl.IsActive(0)){return(true?x :5);}else{if(StrykerNamespace.MutantControl.IsActive(2)){return(true || SomeOtherMethod(out var x)) ? x : 5;}else{return ((StrykerNamespace.MutantControl.IsActive(3)?false:true )&& SomeOtherMethod(out var x)) ? x : (StrykerNamespace.MutantControl.IsActive(5)?0:(StrykerNamespace.MutantControl.IsActive(4)?-5:5));}}}}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -745,7 +745,7 @@ if(StrykerNamespace.MutantControl.IsActive(2)){for (var i = Method(true); ; i--)
     {
         var source = @"static Test()  => (true && SomeOtherMethod(out var x)) ? x : 5;";
         var expected =
-            @"static Test()  {using(new StrykerNamespace.MutantContext()){if(StrykerNamespace.MutantControl.IsActive(1)){(false?x :5);}else{if(StrykerNamespace.MutantControl.IsActive(0)){(true?x :5);}else{if(StrykerNamespace.MutantControl.IsActive(2)){(true || SomeOtherMethod(out var x)) ? x : 5;}else{((StrykerNamespace.MutantControl.IsActive(3)?false:true )&& SomeOtherMethod(out var x)) ? x : 5;}}}}}";
+            @"static Test()  {using(new StrykerNamespace.MutantContext()){if(StrykerNamespace.MutantControl.IsActive(1)){(false?x :5);}else{if(StrykerNamespace.MutantControl.IsActive(0)){(true?x :5);}else{if(StrykerNamespace.MutantControl.IsActive(2)){(true || SomeOtherMethod(out var x)) ? x : 5;}else{((StrykerNamespace.MutantControl.IsActive(3)?false:true )&& SomeOtherMethod(out var x)) ? x : (StrykerNamespace.MutantControl.IsActive(5)?0:(StrykerNamespace.MutantControl.IsActive(4)?-5:5));}}}}}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -770,7 +770,7 @@ int Add(int x, int y) => (StrykerNamespace.MutantControl.IsActive(1)?x - y:x + y
 Action act = () => Console.WriteLine(1 + 1, 1 + 1);
 }";
         var expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-Action act = () => Console.WriteLine((StrykerNamespace.MutantControl.IsActive(1)?1 - 1:1 + 1), (StrykerNamespace.MutantControl.IsActive(2)?1 - 1:1 + 1));
+Action act = () => Console.WriteLine((StrykerNamespace.MutantControl.IsActive(1)?1 - 1:(StrykerNamespace.MutantControl.IsActive(3)?0:(StrykerNamespace.MutantControl.IsActive(2)?-1:1 ))+ (StrykerNamespace.MutantControl.IsActive(5)?0:(StrykerNamespace.MutantControl.IsActive(4)?-1:1))), (StrykerNamespace.MutantControl.IsActive(6)?1 - 1:(StrykerNamespace.MutantControl.IsActive(8)?0:(StrykerNamespace.MutantControl.IsActive(7)?-1:1 ))+ (StrykerNamespace.MutantControl.IsActive(10)?0:(StrykerNamespace.MutantControl.IsActive(9)?-1:1))));
 }}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -784,8 +784,8 @@ Action act = () => Console.WriteLine((StrykerNamespace.MutantControl.IsActive(1)
 	return list.Last();
 }";
         var expected = @"public int TestLinq(int count){if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-	var list = Enumerable.Range(1, count);
-	return (StrykerNamespace.MutantControl.IsActive(1)?list.First():list.Last());
+	var list = Enumerable.Range((StrykerNamespace.MutantControl.IsActive(2)?0:(StrykerNamespace.MutantControl.IsActive(1)?-1:1)), count);
+	return (StrykerNamespace.MutantControl.IsActive(3)?list.First():list.Last());
 }return default(int);}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -803,10 +803,10 @@ Action act = () => Console.WriteLine((StrykerNamespace.MutantControl.IsActive(1)
 		}";
         var expected = @"private void Linq()
 {if(StrykerNamespace.MutantControl.IsActive(0)){}else		{
-			var array = new []{1, 2};
+			var array = new []{(StrykerNamespace.MutantControl.IsActive(2)?0:(StrykerNamespace.MutantControl.IsActive(1)?-1:1)), (StrykerNamespace.MutantControl.IsActive(4)?0:(StrykerNamespace.MutantControl.IsActive(3)?-2:2))};
 
-			var alt1 = (StrykerNamespace.MutantControl.IsActive(1)?array.Sum(x => x % 2 == 0):array.Count(x => (StrykerNamespace.MutantControl.IsActive(2)?x % 2 != 0:(StrykerNamespace.MutantControl.IsActive(3)?x * 2 :x % 2 )== 0)));
-			var alt2 = (StrykerNamespace.MutantControl.IsActive(4)?array.Max():array.Min());
+			var alt1 = (StrykerNamespace.MutantControl.IsActive(5)?array.Sum(x => x % 2 == 0):array.Count(x => (StrykerNamespace.MutantControl.IsActive(6)?x % 2 != 0:(StrykerNamespace.MutantControl.IsActive(7)?x * 2 :x % (StrykerNamespace.MutantControl.IsActive(9)?0:(StrykerNamespace.MutantControl.IsActive(8)?-2:2 )))== (StrykerNamespace.MutantControl.IsActive(10)?42:0))));
+			var alt2 = (StrykerNamespace.MutantControl.IsActive(11)?array.Max():array.Min());
 		}}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -841,7 +841,7 @@ Action act = () => Console.WriteLine((StrykerNamespace.MutantControl.IsActive(1)
 {if(StrykerNamespace.MutantControl.IsActive(0)){}else		{
 			while ((StrykerNamespace.MutantControl.IsActive(1)?!(this.Move()):this.Move()))
 {if(StrykerNamespace.MutantControl.IsActive(2)){}else			{
-				int x = (StrykerNamespace.MutantControl.IsActive(3)?2 - 3:2 + 3);
+				int x = (StrykerNamespace.MutantControl.IsActive(3)?2 - 3:(StrykerNamespace.MutantControl.IsActive(5)?0:(StrykerNamespace.MutantControl.IsActive(4)?-2:2 ))+ (StrykerNamespace.MutantControl.IsActive(7)?0:(StrykerNamespace.MutantControl.IsActive(6)?-3:3)));
 			}
 }		}}";
 
@@ -856,9 +856,9 @@ Action act = () => Console.WriteLine((StrykerNamespace.MutantControl.IsActive(1)
 	x *= x + 2;
 }";
         var expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-	var x = 0;
-if(StrykerNamespace.MutantControl.IsActive(1)){	x /=x + 2;
-}else{	x *= (StrykerNamespace.MutantControl.IsActive(2)?x - 2:x + 2);
+	var x = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
+if(StrykerNamespace.MutantControl.IsActive(2)){	x /= x + 2;
+}else{	x *= (StrykerNamespace.MutantControl.IsActive(3)?x - 2:x + (StrykerNamespace.MutantControl.IsActive(5)?0:(StrykerNamespace.MutantControl.IsActive(4)?-2:2)));
 }}}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -910,8 +910,8 @@ if(StrykerNamespace.MutantControl.IsActive(1)){    a = b ??= new List<int>();
 	x++;
 }";
         var expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-	var x = 0;
-if(StrykerNamespace.MutantControl.IsActive(1)){;}else{if(StrykerNamespace.MutantControl.IsActive(2)){	x--;
+	var x = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
+if(StrykerNamespace.MutantControl.IsActive(2)){;}else{if(StrykerNamespace.MutantControl.IsActive(3)){	x--;
 }else{	x++;
 }}}}";
 
@@ -922,14 +922,14 @@ if(StrykerNamespace.MutantControl.IsActive(1)){;}else{if(StrykerNamespace.Mutant
     public void ShouldNotMutateIfDisabledByComment()
     {
         var source = @"public void SomeMethod() {
-	var x = 0;
 // Stryker disable all
+	var x = 0;
 	x++;
 	x/=2;
 }";
         var expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-	var x = 0;
 // Stryker disable all
+	var x = 0;
 	x++;
 	x/=2;
 }}";
@@ -944,14 +944,14 @@ if(StrykerNamespace.MutantControl.IsActive(1)){;}else{if(StrykerNamespace.Mutant
 	}
 	x/=2;
 }";
-        expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(4)){}else{
-	var x = 0;
-{if(StrykerNamespace.MutantControl.IsActive(5)){}else	{
+        expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(7)){}else{
+	var x = (StrykerNamespace.MutantControl.IsActive(8)?42:0);
+{if(StrykerNamespace.MutantControl.IsActive(9)){}else	{
 	// Stryker disable all
 	  x++;
 	}
-}if(StrykerNamespace.MutantControl.IsActive(8)){	x*=2;
-}else{	x/=2;
+}if(StrykerNamespace.MutantControl.IsActive(12)){	x*=2;
+}else{	x/=(StrykerNamespace.MutantControl.IsActive(14)?0:(StrykerNamespace.MutantControl.IsActive(13)?-2:2));
 }}}";
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -1104,14 +1104,14 @@ public void SomeMethod()
 	x/=2;
 }";
         expected = @"public void SomeMethod()
-{if(StrykerNamespace.MutantControl.IsActive(4)){}else{
-	var x = 0;
-{if(StrykerNamespace.MutantControl.IsActive(5)){}else	{
+{if(StrykerNamespace.MutantControl.IsActive(7)){}else{
+	var x = (StrykerNamespace.MutantControl.IsActive(8)?42:0);
+{if(StrykerNamespace.MutantControl.IsActive(9)){}else	{
 	// Stryker disable once all
 	  x++;
 	}
-}if(StrykerNamespace.MutantControl.IsActive(8)){	x*=2;
-}else{	x/=2;
+}if(StrykerNamespace.MutantControl.IsActive(12)){	x*=2;
+}else{	x/=(StrykerNamespace.MutantControl.IsActive(14)?0:(StrykerNamespace.MutantControl.IsActive(13)?-2:2));
 }}}";
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -1126,11 +1126,11 @@ public void SomeMethod()
 	x/=2;
 }";
         var expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-	var x = 0;
+	var x = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
 // Stryker disable once all
 	x++;
-if(StrykerNamespace.MutantControl.IsActive(3)){	x*=2;
-}else{	x/=2;
+if(StrykerNamespace.MutantControl.IsActive(4)){	x*=2;
+}else{	x/=(StrykerNamespace.MutantControl.IsActive(6)?0:(StrykerNamespace.MutantControl.IsActive(5)?-2:2));
 }}}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -1147,13 +1147,13 @@ if(StrykerNamespace.MutantControl.IsActive(3)){	x*=2;
 	x/=2;
 }";
         var expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-	var x = 0;
+	var x = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
 // Stryker disable all
 	x++;
-if(StrykerNamespace.MutantControl.IsActive(3)){// Stryker restore all
+if(StrykerNamespace.MutantControl.IsActive(4)){// Stryker restore all
 	x*=2;
 }else{// Stryker restore all
-	x/=2;
+	x/=(StrykerNamespace.MutantControl.IsActive(6)?0:(StrykerNamespace.MutantControl.IsActive(5)?-2:2));
 }}}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -1169,13 +1169,11 @@ if(StrykerNamespace.MutantControl.IsActive(3)){// Stryker restore all
 	x/=2;
 }";
         var expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-	var x = 0;
-// Stryker disable Update , Statement : comment
+	var x = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
+// Stryker disable once all
 	x++;
-if(StrykerNamespace.MutantControl.IsActive(3)){// Stryker restore all
-	x*=2;
-}else{// Stryker restore all
-	x/=2;
+if(StrykerNamespace.MutantControl.IsActive(4)){	x*=2;
+}else{	x/=(StrykerNamespace.MutantControl.IsActive(6)?0:(StrykerNamespace.MutantControl.IsActive(5)?-2:2));
 }}}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -1192,24 +1190,24 @@ if(StrykerNamespace.MutantControl.IsActive(3)){// Stryker restore all
 	x/=2;
 }";
         var expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-	var x = 0;
+	var x = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
 // Stryker disable Update , Statement : comment
 	x++;
-if(StrykerNamespace.MutantControl.IsActive(3)){// Stryker restore all
+if(StrykerNamespace.MutantControl.IsActive(4)){// Stryker restore all
 	x*=2;
 }else{// Stryker restore all
-	x/=2;
+	x/=(StrykerNamespace.MutantControl.IsActive(6)?0:(StrykerNamespace.MutantControl.IsActive(5)?-2:2));
 }}}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
 
-        Target.Mutants.Count.ShouldBe(4);
+        _target.Mutants.Count.ShouldBe(7);
         Target.Mutants.ElementAt(0).ResultStatus.ShouldBe(MutantStatus.Pending);
-        Target.Mutants.ElementAt(1).ResultStatus.ShouldBe(MutantStatus.Ignored);
-        Target.Mutants.ElementAt(1).ResultStatusReason.ShouldBe("comment");
         Target.Mutants.ElementAt(2).ResultStatus.ShouldBe(MutantStatus.Ignored);
         Target.Mutants.ElementAt(2).ResultStatusReason.ShouldBe("comment");
-        Target.Mutants.ElementAt(3).ResultStatus.ShouldBe(MutantStatus.Pending);
+        _target.Mutants.ElementAt(3).ResultStatus.ShouldBe(MutantStatus.Ignored);
+        _target.Mutants.ElementAt(3).ResultStatusReason.ShouldBe("comment");
+        _target.Mutants.ElementAt(4).ResultStatus.ShouldBe(MutantStatus.Pending);
     }
 
     [TestMethod]
@@ -1222,8 +1220,9 @@ if(StrykerNamespace.MutantControl.IsActive(3)){// Stryker restore all
 x +2;
 }";
         var expected = @"public void SomeMethod() {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-	var x = 0;
-if(StrykerNamespace.MutantControl.IsActive(1)){	x*=// Stryker disable once all
+	var x = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
+if(StrykerNamespace.MutantControl.IsActive(2)){	x*=
+// Stryker disable once all
 x +2;
 }else{	x/=
 // Stryker disable once all
@@ -1284,8 +1283,8 @@ return default(bool);}		}
 
 static Mutator_Flag_MutatedStatics()
 {using(new StrykerNamespace.MutantContext()){if(StrykerNamespace.MutantControl.IsActive(4)){}else		{
-			int x = 0;
-			var y = (StrykerNamespace.MutantControl.IsActive(5)?x--:x++);
+			int x = (StrykerNamespace.MutantControl.IsActive(5)?42:0);
+			var y = (StrykerNamespace.MutantControl.IsActive(6)?x--:x++);
 		}}}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -1304,8 +1303,7 @@ static Mutator_Flag_MutatedStatics()
     public void ShouldInitializeOutVars()
     {
         var source = @"public void SomeMethod(out int x, out string text) { x = 1; text = ""hello"";}";
-        var expected = @"public void SomeMethod(out int x, out string text) {{x= default(int);text= default(string);}if(StrykerNamespace.MutantControl.IsActive(0)){}else{ x = 1; text = (StrykerNamespace.MutantControl.IsActive(1)?"""":""hello"");
-        }}";
+        string expected = @"public void SomeMethod(out int x, out string text) {{x= default(int);text= default(string);}if(StrykerNamespace.MutantControl.IsActive(0)){}else{ x = (StrykerNamespace.MutantControl.IsActive(2)?0:(StrykerNamespace.MutantControl.IsActive(1)?-1:1)); text = (StrykerNamespace.MutantControl.IsActive(3)?"""":""hello"");}}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
     }
@@ -1386,7 +1384,7 @@ if(StrykerNamespace.MutantControl.IsActive(2)){;}else{Console.WriteLine((Stryker
         Target.Mutate(CSharpSyntaxTree.ParseText(source), null);
 
         var mutants = Target.GetLatestMutantBatch().ToList();
-        mutants.Count.ShouldBe(2);
+        mutants.Count.ShouldBe(6);
         var blockLinespan = mutants.First().Mutation.OriginalNode.GetLocation().GetLineSpan();
         blockLinespan.StartLinePosition.Line.ShouldBe(1);
         blockLinespan.EndLinePosition.Line.ShouldBe(3);
@@ -1669,8 +1667,8 @@ var x = a == 1 ? 5 : 7;
 }";
         var expected = @"void TestMethod()
 {if(StrykerNamespace.MutantControl.IsActive(0)){}else{
-var a = 1;
-var x = (StrykerNamespace.MutantControl.IsActive(2)?(false?5 :7):(StrykerNamespace.MutantControl.IsActive(1)?(true?5 :7):(StrykerNamespace.MutantControl.IsActive(3)?a != 1 :a == 1 )? 5 : 7));
+var a = (StrykerNamespace.MutantControl.IsActive(2)?0:(StrykerNamespace.MutantControl.IsActive(1)?-1:1));
+var x = (StrykerNamespace.MutantControl.IsActive(4)?(false?5 :7):(StrykerNamespace.MutantControl.IsActive(3)?(true?5 :7):(StrykerNamespace.MutantControl.IsActive(5)?a != 1 :a == (StrykerNamespace.MutantControl.IsActive(7)?0:(StrykerNamespace.MutantControl.IsActive(6)?-1:1 )))? (StrykerNamespace.MutantControl.IsActive(9)?0:(StrykerNamespace.MutantControl.IsActive(8)?-5:5 )): (StrykerNamespace.MutantControl.IsActive(11)?0:(StrykerNamespace.MutantControl.IsActive(10)?-7:7))));
 }}";
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -1757,19 +1755,17 @@ string Value {get{if(StrykerNamespace.MutantControl.IsActive(1)){return(false?""
 			int mag = (int)Math.Log(value, 1024);
 			decimal adjustedSize = (decimal)value / (1L << (mag * 10));
 
-			return $""{ adjustedSize:n1} { SizeSuffixes[mag] }"";
-
-        }
-else		{
-			string[] SizeSuffixes = { (StrykerNamespace.MutantControl.IsActive(2) ? """" : ""bytes""), (StrykerNamespace.MutantControl.IsActive(3) ? """" : ""KB""), (StrykerNamespace.MutantControl.IsActive(4) ? """" : ""MB""), (StrykerNamespace.MutantControl.IsActive(5) ? """" : ""GB"") };
-
-        int mag = (int)(StrykerNamespace.MutantControl.IsActive(7) ? Math.Pow(value, 1024) : (StrykerNamespace.MutantControl.IsActive(6) ? Math.Exp(value, 1024) : Math.Log(value, 1024)));
-        decimal adjustedSize = (StrykerNamespace.MutantControl.IsActive(8) ? (decimal)value * (1L << (mag * 10)) : (decimal)value / ((StrykerNamespace.MutantControl.IsActive(9) ? 1L >> (mag * 10) : 1L << ((StrykerNamespace.MutantControl.IsActive(10) ? mag / 10 : mag * 10)))));
-
-			return (StrykerNamespace.MutantControl.IsActive(11)?$"""":$""{ adjustedSize:n1} {SizeSuffixes[mag]}"");
+			return $""{adjustedSize:n1} {SizeSuffixes[mag]}"";
 		}
-}
-return default(string);}";
+else		{
+			string[] SizeSuffixes = { (StrykerNamespace.MutantControl.IsActive(2)?"""":""bytes""), (StrykerNamespace.MutantControl.IsActive(3)?"""":""KB""), (StrykerNamespace.MutantControl.IsActive(4)?"""":""MB""), (StrykerNamespace.MutantControl.IsActive(5)?"""":""GB"" )};
+
+			int mag = (int)(StrykerNamespace.MutantControl.IsActive(7)?Math.Pow(value, 1024):(StrykerNamespace.MutantControl.IsActive(6)?Math.Exp(value, 1024):Math.Log(value, (StrykerNamespace.MutantControl.IsActive(9)?0:(StrykerNamespace.MutantControl.IsActive(8)?-1024:1024)))));
+			decimal adjustedSize = (StrykerNamespace.MutantControl.IsActive(10)?(decimal)value * (1L << (mag * 10)):(decimal)value / ((StrykerNamespace.MutantControl.IsActive(11)?1L >> (mag * 10):1L << ((StrykerNamespace.MutantControl.IsActive(12)?mag / 10:mag * (StrykerNamespace.MutantControl.IsActive(14)?0:(StrykerNamespace.MutantControl.IsActive(13)?-10:10)))))));
+
+			return (StrykerNamespace.MutantControl.IsActive(15)?$"""":$""{adjustedSize:n1} {SizeSuffixes[mag]}"");
+		}
+}return default(string);}";
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
@@ -1783,7 +1779,7 @@ string Value => Generator(out var x) ? """" :""test"";
 }";
 
         var expected = @"class Test {
-int GetId(string input) {if(StrykerNamespace.MutantControl.IsActive(1)){return(false?result :0);}else{if(StrykerNamespace.MutantControl.IsActive(0)){return(true?result :0);}else{return int.TryParse(input, out var result) ? result : 0;}}}string Value {get{if(StrykerNamespace.MutantControl.IsActive(3)){return(false?"""" :""test"");}else{if(StrykerNamespace.MutantControl.IsActive(2)){return(true?"""" :""test"");}else{return Generator(out var x) ? (StrykerNamespace.MutantControl.IsActive(4)?""Stryker was here!"":"""" ):(StrykerNamespace.MutantControl.IsActive(5)?"""":""test"");}}}}}";
+int GetId(string input) {if(StrykerNamespace.MutantControl.IsActive(1)){return(false?result :0);}else{if(StrykerNamespace.MutantControl.IsActive(0)){return(true?result :0);}else{return int.TryParse(input, out var result) ? result : (StrykerNamespace.MutantControl.IsActive(2)?42:0);}}}string Value {get{if(StrykerNamespace.MutantControl.IsActive(4)){return(false?"""" :""test"");}else{if(StrykerNamespace.MutantControl.IsActive(3)){return(true?"""" :""test"");}else{return Generator(out var x) ? (StrykerNamespace.MutantControl.IsActive(5)?""Stryker was here!"":"""" ):(StrykerNamespace.MutantControl.IsActive(6)?"""":""test"");}}}}}";
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
@@ -1820,9 +1816,9 @@ else        {
         }
 }return default(string);}        private bool TryGet(char myChar, out int i)
 {{i= default(int);}if(StrykerNamespace.MutantControl.IsActive(2)){}else        {
-            i = 0;
-            return (StrykerNamespace.MutantControl.IsActive(3)?false:true);
-        }return default(bool);}}}}";
+            i = (StrykerNamespace.MutantControl.IsActive(3)?42:0);
+            return (StrykerNamespace.MutantControl.IsActive(4)?false:true);
+        }return default(bool);}";
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
@@ -1896,10 +1892,9 @@ else        {
             """
             static string Value => (
                 StrykerNamespace.MutantControl.IsActive(0)
-                    ? ""
-                    : (StrykerNamespace.MutantControl.IsActive(1) ? "" : "test ")
-                .Substring(2)
-            );
+                    ?""
+                    :(StrykerNamespace.MutantControl.IsActive(1)?"":"test ")
+                .Substring((StrykerNamespace.MutantControl.IsActive(3)?0:(StrykerNamespace.MutantControl.IsActive(2)?-2:2))));
             """;
 
         ShouldMutateSourceInClassToExpected(source, expected);
@@ -1912,13 +1907,15 @@ else        {
 
         var expected =
             """
-            static char Value =>
-            (StrykerNamespace.MutantControl.IsActive(0)?'\0':
+            static char Value => (StrykerNamespace.MutantControl.IsActive(0)?'\0':
             (StrykerNamespace.MutantControl.IsActive(1)?"".ElementAt(2):
             (StrykerNamespace.MutantControl.IsActive(2)?"test ".ToUpper().Trim().PadRight(2).Substring(2).ElementAt(2):
             (StrykerNamespace.MutantControl.IsActive(3)?"".PadLeft(2).Substring(2).ElementAt(2):
             (StrykerNamespace.MutantControl.IsActive(4)?"test ".ToLower().Trim().PadLeft(2).Substring(2).ElementAt(2):
-            (StrykerNamespace.MutantControl.IsActive(5)?"":"test ").ToUpper().Trim().PadLeft(2).Substring(2).ElementAt(2))))));
+            (StrykerNamespace.MutantControl.IsActive(5)?"":"test ").ToUpper().Trim().PadLeft((StrykerNamespace.MutantControl.IsActive(7)?0:
+            (StrykerNamespace.MutantControl.IsActive(6)?-2:2))).Substring((StrykerNamespace.MutantControl.IsActive(9)?0:
+            (StrykerNamespace.MutantControl.IsActive(8)?-2:2))).ElementAt((StrykerNamespace.MutantControl.IsActive(11)?0:
+            (StrykerNamespace.MutantControl.IsActive(10)?-2:2))))))));
             """;
 
         ShouldMutateSourceInClassToExpected(source, expected);
