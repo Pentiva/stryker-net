@@ -191,7 +191,7 @@ public class StrykerOptions
     /// <summary>
     /// Method call mutations that should not be tested. The implementation of the method may still be mutated and tested.
     /// </summary>
-    public IEnumerable<Regex> IgnoredMethods { get; init; } = [];
+    public IEnumerable<IgnoredMethod> IgnoredMethods { get; init; } = [];
 
     /// <summary>
     /// Mutations that should not be tested.
