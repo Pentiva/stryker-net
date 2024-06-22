@@ -6,8 +6,10 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using Shouldly;
+using Stryker.Core.InjectedHelpers;
 using Stryker.Core.MutantFilters;
 using Stryker.Core.Mutants;
+using Stryker.Core.Mutators;
 using Stryker.Core.Options;
 using Stryker.Core.Options.Inputs;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -677,6 +679,101 @@ public class MutantFilters_DoNotIgnoreOtherMutantsInFile
 
             Microsoft.CodeAnalysis.SyntaxNode GetOriginalNode(string node) =>
                 baseSyntaxTree.FindNode(new TextSpan(source.IndexOf(node, StringComparison.OrdinalIgnoreCase), node.Length));
+        }
+
+        [Fact]
+        public void MutantFilters_ExtendedSyntax()
+        {
+            const string Source = """
+protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken  cancellationToken) {
+    ArgumentNullException.ThrowIfNull(request);
+    Debug.Assert(request.RequestUri is not null, "HttpClient should always set this");
+    return SendAsyncCore(request, cancellationToken);
+}
+""";
+
+            var baseSyntaxTree = CSharpSyntaxTree.ParseText(Source).GetRoot();
+            var mutants = new[]
+                          {
+                              (Mutator.Equality, "request.RequestUri is not null"),
+                              (Mutator.String, "\"HttpClient should always set this\""),
+                              (Mutator.Statement,
+                               "Debug.Assert(request.RequestUri is not null, \"HttpClient should always set this\");")
+                          }
+                         .Select(node => new Mutant
+                          {
+                              Mutation = new Mutation
+                              {
+                                  OriginalNode = baseSyntaxTree.FindNode(new TextSpan(Source.IndexOf(node.Item2, StringComparison.OrdinalIgnoreCase), node.Item2.Length)),
+                                  Type = node.Item1
+                              }
+                          }).ToArray();
+            var options = new StrykerOptions
+            {
+                IgnoredMethods =
+                    new IgnoreMethodsInput { SuppliedInput = ["Debug.Assert:statement,string"] }.Validate()
+            };
+
+            var sut = new IgnoredMethodMutantFilter();
+            var filteredMutants = sut.FilterMutants(mutants, null, options);
+
+            filteredMutants.ShouldContain(mutants[0]);
+            filteredMutants.ShouldNotContain(mutants[1]);
+            filteredMutants.ShouldNotContain(mutants[2]);
+        }
+
+        [Theory]
+        [InlineData("Method", 7)]
+        [InlineData("Method:arithmetic", 33)]
+        [InlineData("Method:arithmetic,nullcoalescing", 30)]
+        [InlineData("Method:arithmetic,logical,nullcoalescing", 28)]
+        [InlineData("Method:assignment", 35)]
+        [InlineData("Method:bitwise", 35)]
+        [InlineData("Method:boolean", 32)]
+        [InlineData("Method:boolean,equality", 30)]
+        [InlineData("Method:conditional", 35)]
+        [InlineData("Method:equality", 33)]
+        [InlineData("Method:initializer", 35)]
+        [InlineData("Method:linq", 35)]
+        [InlineData("Method:logical", 33)]
+        [InlineData("Method:math", 35)]
+        [InlineData("Method:nullcoalescing", 32)]
+        [InlineData("Method:statement", 24)]
+        [InlineData("Method:string", 32)]
+        [InlineData("Method:stringmethod", 35)]
+        [InlineData("Method:unary", 34)]
+        public void MutantFilters_ExtendedSyntax2(string methodFilter, int expected)
+        {
+            const string Source = """
+                                  protected void OuterMethod() {
+                                      Method(5 is not null);
+                                      Method(1 == -2);
+                                      Method(1 + 5);
+                                      Method((null ?? 1) + 5);
+                                      Method(1 == 2 ? 5 : 0);
+                                      Method("banana");
+                                      Method("banana" + "apple");
+                                      Method("banana".ToUpper());
+                                      Method(5);
+                                      Method(true && false || true);
+                                      Method(((IEnumerable<int>)[2]).First());
+                                  }
+                                  """;
+
+            var options = new StrykerOptions
+            {
+                IgnoredMethods   = new IgnoreMethodsInput { SuppliedInput = [methodFilter] }.Validate(),
+                MutationLevel    = MutationLevel.Complete,
+                OptimizationMode = OptimizationModes.CoverageBasedTest,
+            };
+
+            var orchestrator = new CsharpMutantOrchestrator(new MutantPlacer(new CodeInjection()), options: options);
+            orchestrator.Mutate(CSharpSyntaxTree.ParseText(Source), null);
+
+            var sut = new IgnoredMethodMutantFilter();
+            var filteredMutants = sut.FilterMutants(orchestrator.Mutants, null, options);
+
+            filteredMutants.Count().ShouldBe(expected);
         }
 
         private T FindEnclosingNode<T>(SyntaxNode start) where T: SyntaxNode =>
