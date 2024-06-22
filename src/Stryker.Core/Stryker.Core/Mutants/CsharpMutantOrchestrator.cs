@@ -112,7 +112,8 @@ public class CsharpMutantOrchestrator : BaseMutantOrchestrator<SyntaxTree, Seman
         new MathMutator(),
         new SwitchExpressionMutator(),
         new IsPatternExpressionMutator(),
-        new StringMethodMutator()
+        new StringMethodMutator(),
+        new IntegerMutator()
     ];
 
     private IEnumerable<IMutator> Mutators { get; }
