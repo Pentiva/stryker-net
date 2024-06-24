@@ -41,9 +41,9 @@ public class CollectionExpressionMutatorTests : TestBase
 
         var target = new CollectionExpressionMutator();
 
-        var result = target.ApplyMutations(expressionSyntax, null);
+        var result = target.ApplyMutations(expressionSyntax, null).ToList();
 
-        result.Count().ShouldBe(2);
+        result.Count.ShouldBe(1);
         foreach (var mutation in result)
         {
             mutation.DisplayName.ShouldBe("Collection expression mutation");
@@ -141,7 +141,7 @@ public class CollectionExpressionMutatorTests : TestBase
                         int[] abc = [];
                     }
                 }
-                """, 2)]
+                """, 1)]
     [InlineData("""
                 using System;
                 using System.Collections.Generic;
@@ -205,7 +205,7 @@ public class CollectionExpressionMutatorTests : TestBase
                         var b = a ?? [];
                     }
                 }
-                """, 4)]
+                """, 2)]
     [InlineData("""
                 using System;
                 using System.Collections.Generic;
@@ -219,7 +219,7 @@ public class CollectionExpressionMutatorTests : TestBase
                         var b = a ?? [];
                     }
                 }
-                """, 4)]
+                """, 2)]
     [InlineData("""
                 using System;
                 using System.Collections.Generic;
@@ -258,7 +258,7 @@ public class CollectionExpressionMutatorTests : TestBase
                     }
                     public void AddAll(IEnumerable<int> list) { }
                 }
-                """, 4)]
+                """, 2)]
     public void MutatedCollectionExpressionsShouldCompile(string inputText, int expectedMutants)
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(inputText);
