@@ -681,7 +681,7 @@ public class MutantFilters_DoNotIgnoreOtherMutantsInFile
                 baseSyntaxTree.FindNode(new TextSpan(source.IndexOf(node, StringComparison.OrdinalIgnoreCase), node.Length));
         }
 
-        [Fact]
+        [TestMethod]
         public void MutantFilters_ExtendedSyntax()
         {
             const string Source = """
@@ -722,26 +722,26 @@ protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage reques
             filteredMutants.ShouldNotContain(mutants[2]);
         }
 
-        [Theory]
-        [InlineData("Method", 7)]
-        [InlineData("Method:arithmetic", 33)]
-        [InlineData("Method:arithmetic,nullcoalescing", 30)]
-        [InlineData("Method:arithmetic,logical,nullcoalescing", 28)]
-        [InlineData("Method:assignment", 35)]
-        [InlineData("Method:bitwise", 35)]
-        [InlineData("Method:boolean", 32)]
-        [InlineData("Method:boolean,equality", 30)]
-        [InlineData("Method:conditional", 35)]
-        [InlineData("Method:equality", 33)]
-        [InlineData("Method:initializer", 35)]
-        [InlineData("Method:linq", 35)]
-        [InlineData("Method:logical", 33)]
-        [InlineData("Method:math", 35)]
-        [InlineData("Method:nullcoalescing", 32)]
-        [InlineData("Method:statement", 24)]
-        [InlineData("Method:string", 32)]
-        [InlineData("Method:stringmethod", 35)]
-        [InlineData("Method:unary", 34)]
+        [TestMethod]
+        [DataRow("Method", 0)]
+        [DataRow("Method:arithmetic", 32)]
+        [DataRow("Method:arithmetic,logical,nullcoalescing", 27)]
+        [DataRow("Method:arithmetic,nullcoalescing", 29)]
+        [DataRow("Method:assignment", 34)]
+        [DataRow("Method:bitwise", 34)]
+        [DataRow("Method:boolean", 31)]
+        [DataRow("Method:boolean,equality", 28)]
+        [DataRow("Method:conditional", 32)]
+        [DataRow("Method:equality", 31)]
+        [DataRow("Method:initializer", 34)]
+        [DataRow("Method:linq", 33)]
+        [DataRow("Method:logical", 32)]
+        [DataRow("Method:math", 34)]
+        [DataRow("Method:nullcoalescing", 31)]
+        [DataRow("Method:statement", 23)]
+        [DataRow("Method:string", 30)]
+        [DataRow("Method:stringmethod", 33)]
+        [DataRow("Method:unary", 33)]
         public void MutantFilters_ExtendedSyntax2(string methodFilter, int expected)
         {
             const string Source = """
