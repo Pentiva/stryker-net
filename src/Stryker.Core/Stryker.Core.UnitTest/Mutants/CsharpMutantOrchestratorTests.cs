@@ -1812,7 +1812,7 @@ else        {
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ShouldMutateCollectionExpression()
     {
         var source = "static ReadOnlySpan<int> Value => [1, 2, 3];";
@@ -1823,7 +1823,7 @@ else        {
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ShouldMutateCollectionExpression2()
     {
         var source = """
@@ -1852,7 +1852,7 @@ else        {
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ShouldMutateCollectionExpression3()
     {
         var source = """
@@ -1882,7 +1882,7 @@ else        {
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ShouldMutateCollectionExpression4()
     {
         var source = """
@@ -1926,7 +1926,7 @@ else        {
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ShouldMutateCollectionExpression5()
     {
         var source = """
@@ -1989,7 +1989,7 @@ else        {
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ShouldMutateCollectionExpression6()
     {
         var source = """
@@ -2048,7 +2048,7 @@ else        {
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ShouldMutateCollectionExpression7()
     {
         var source = """
@@ -2108,7 +2108,7 @@ else        {
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ShouldMutateCollectionExpression8()
     {
         var source = """
@@ -2155,7 +2155,7 @@ else        {
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ShouldMutateCollectionExpression9()
     {
         var source = "static int[][] Value => [[1, 2], [3]];";
@@ -2166,7 +2166,7 @@ else        {
         ShouldMutateSourceInClassToExpected(source, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ShouldMutateCollectionExpression10()
     {
         var source = "static int[][] Value => [[1, 2], new int[] { 3 }];";

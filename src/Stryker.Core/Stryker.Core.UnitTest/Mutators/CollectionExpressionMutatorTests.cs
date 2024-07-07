@@ -17,24 +17,25 @@ using Stryker.Core.MutationTest;
 using Stryker.Core.Mutators;
 using Stryker.Core.Options;
 using Stryker.Core.ProjectComponents.SourceProjects;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Stryker.Core.UnitTest.Mutators;
 
+[TestClass]
 public class CollectionExpressionMutatorTests : TestBase
 {
-    [Fact]
+    [TestMethod]
     public void ShouldBeMutationLevelAdvanced()
     {
         var target = new CollectionExpressionMutator();
         target.MutationLevel.ShouldBe(MutationLevel.Advanced);
     }
     
-    [Theory]
-    [InlineData("[]")]
-    [InlineData("[ ]")]
-    [InlineData("[           ]")]
-    [InlineData("[ /* Comment */ ]")]
+    [TestMethod]
+    [DataRow("[]")]
+    [DataRow("[ ]")]
+    [DataRow("[           ]")]
+    [DataRow("[ /* Comment */ ]")]
     public void ShouldAddValueToEmptyCollectionExpression(string expression)
     {
         var expressionSyntax = SyntaxFactory.ParseExpression(expression) as CollectionExpressionSyntax;
@@ -53,11 +54,11 @@ public class CollectionExpressionMutatorTests : TestBase
         }
     }
 
-    [Theory]
-    [InlineData("[1, 2, 3]")]
-    [InlineData("[-1, 3]")]
-    [InlineData("[1, .. abc, 3]")]
-    [InlineData("[..abc]")]
+    [TestMethod]
+    [DataRow("[1, 2, 3]")]
+    [DataRow("[-1, 3]")]
+    [DataRow("[1, .. abc, 3]")]
+    [DataRow("[..abc]")]
     public void ShouldRemoveValuesFromCollectionExpression(string expression)
     {
         var expressionSyntax = SyntaxFactory.ParseExpression(expression) as CollectionExpressionSyntax;
@@ -73,8 +74,8 @@ public class CollectionExpressionMutatorTests : TestBase
         replacement.Elements.ShouldBeEmpty();
     }
     
-    [Theory]
-    [InlineData("""
+    [TestMethod]
+    [DataRow("""
                 using System;
 
                 namespace ExampleProject;
@@ -86,7 +87,7 @@ public class CollectionExpressionMutatorTests : TestBase
                     }
                 }
                 """, 2)]
-    [InlineData("""
+    [DataRow("""
                 using System;
 
                 namespace ExampleProject;
@@ -98,7 +99,7 @@ public class CollectionExpressionMutatorTests : TestBase
                     }
                 }
                 """, 2)]
-    [InlineData("""
+    [DataRow("""
                 using System;
 
                 namespace ExampleProject;
@@ -109,7 +110,7 @@ public class CollectionExpressionMutatorTests : TestBase
                     }
                 }
                 """, 3)]
-    [InlineData("""
+    [DataRow("""
                 using System;
 
                 namespace ExampleProject;
@@ -120,7 +121,7 @@ public class CollectionExpressionMutatorTests : TestBase
                     }
                 }
                 """, 2)]
-    [InlineData("""
+    [DataRow("""
                 using System;
 
                 namespace ExampleProject;
@@ -131,7 +132,7 @@ public class CollectionExpressionMutatorTests : TestBase
                     }
                 }
                 """, 3)]
-    [InlineData("""
+    [DataRow("""
                 using System;
 
                 namespace ExampleProject;
@@ -142,7 +143,7 @@ public class CollectionExpressionMutatorTests : TestBase
                     }
                 }
                 """, 1)]
-    [InlineData("""
+    [DataRow("""
                 using System;
                 using System.Collections.Generic;
 
@@ -158,7 +159,7 @@ public class CollectionExpressionMutatorTests : TestBase
                     }
                 }
                 """, 1)]
-    [InlineData("""
+    [DataRow("""
                 using System;
                 using System.Collections.Generic;
 
@@ -192,7 +193,7 @@ public class CollectionExpressionMutatorTests : TestBase
                     }
                 }
                 """, 1)]
-    [InlineData("""
+    [DataRow("""
                 using System;
                 using System.Collections.Generic;
                 using System.Collections.Immutable;
@@ -206,7 +207,7 @@ public class CollectionExpressionMutatorTests : TestBase
                     }
                 }
                 """, 2)]
-    [InlineData("""
+    [DataRow("""
                 using System;
                 using System.Collections.Generic;
                 using System.Collections.Immutable;
@@ -220,7 +221,7 @@ public class CollectionExpressionMutatorTests : TestBase
                     }
                 }
                 """, 2)]
-    [InlineData("""
+    [DataRow("""
                 using System;
                 using System.Collections.Generic;
                 using System.Collections.Immutable;
@@ -239,7 +240,7 @@ public class CollectionExpressionMutatorTests : TestBase
                     }
                 }
                 """, 3)]
-    [InlineData("""
+    [DataRow("""
                 using System;
                 using System.Collections;
                 using System.Collections.Generic;
