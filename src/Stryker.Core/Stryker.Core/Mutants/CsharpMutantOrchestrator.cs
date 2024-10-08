@@ -67,6 +67,7 @@ public class CsharpMutantOrchestrator : BaseMutantOrchestrator<SyntaxTree, Seman
         // ensure static constructs are marked properly
         new StaticFieldDeclarationOrchestrator(),
         new StaticConstructorOrchestrator(),
+        new GeneratedRegexOrchestrator(),
         // ensure array initializer mutations are controlled at statement level
         new MutateAtStatementLevelOrchestrator<InitializerExpressionSyntax>(t =>
             t.Kind() == SyntaxKind.ArrayInitializerExpression && t.Expressions.Count > 0),
@@ -108,6 +109,7 @@ public class CsharpMutantOrchestrator : BaseMutantOrchestrator<SyntaxTree, Seman
         new ArrayCreationMutator(),
         new StatementMutator(),
         new RegexMutator(),
+        new GeneratedRegexMutator(),
         new NullCoalescingExpressionMutator(),
         new MathMutator(),
         new SwitchExpressionMutator(),
@@ -162,13 +164,12 @@ public class CsharpMutantOrchestrator : BaseMutantOrchestrator<SyntaxTree, Seman
     private Mutant CreateNewMutant(Mutation mutation, MutationContext context)
     {
         var mutantIgnored = context.FilteredMutators?.Contains(mutation.Type) ?? false;
-        return new Mutant
-        {
-            Mutation = mutation,
-            ResultStatus = mutantIgnored ? MutantStatus.Ignored : MutantStatus.Pending,
-            IsStaticValue = context.InStaticValue,
-            ResultStatusReason = mutantIgnored ? context.FilterComment : null
-        };
+        var mutant = mutation.CreateMutant();
+        mutant.Mutation           = mutation;
+        mutant.ResultStatus       = mutantIgnored ? MutantStatus.Ignored : MutantStatus.Pending;
+        mutant.IsStaticValue      = context.InStaticValue;
+        mutant.ResultStatusReason = mutantIgnored ? context.FilterComment : null;
+        return mutant;
     }
 
     /// <summary>

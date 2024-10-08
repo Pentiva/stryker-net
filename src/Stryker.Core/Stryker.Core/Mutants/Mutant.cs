@@ -1,3 +1,5 @@
+using Microsoft.CodeAnalysis;
+
 namespace Stryker.Core.Mutants
 {
     /// <summary>
@@ -14,6 +16,10 @@ namespace Stryker.Core.Mutants
         ITestGuids AssessingTests { get; }
         bool CountForStats { get; }
         bool IsStaticValue { get; }
+
+        string ReplacementText => Mutation.ReplacementNode.ToString();
+
+        FileLinePositionSpan OriginalLocation => Mutation.OriginalNode.GetLocation().GetMappedLineSpan();
     }
 
     /// <summary>
@@ -59,5 +65,14 @@ namespace Stryker.Core.Mutants
                 ResultStatus = MutantStatus.Survived;
             }
         }
+    }
+
+    public sealed class GeneratedRegexMutant : Mutant, IReadOnlyMutant
+    {
+        /// <inheritdoc />
+        public string ReplacementText { get; set; }
+
+        /// <inheritdoc />
+        public FileLinePositionSpan OriginalLocation { get; set; }
     }
 }
