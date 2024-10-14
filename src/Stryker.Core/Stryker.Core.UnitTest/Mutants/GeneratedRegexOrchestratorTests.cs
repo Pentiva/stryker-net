@@ -13,10 +13,11 @@ using VerifyMSTest;
 using VerifyTests;
 using System.Runtime.CompilerServices;
 using Serilog.Events;
+using Stryker.Abstractions;
+using Stryker.Abstractions.Mutators;
 using Stryker.Core.InjectedHelpers;
 using Stryker.Core.Mutants;
-using Stryker.Core.Mutators;
-using Stryker.Core.Options;
+using Stryker.Abstractions.Options;
 
 namespace Stryker.Core.UnitTest.Mutants;
 

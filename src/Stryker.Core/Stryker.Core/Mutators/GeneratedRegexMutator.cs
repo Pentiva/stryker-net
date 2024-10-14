@@ -4,7 +4,8 @@ using System.Text.Json.Serialization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using Stryker.Core.Mutants;
+using Stryker.Abstractions.Mutants;
+using Stryker.Abstractions.Mutators;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Stryker.Core.Mutators;

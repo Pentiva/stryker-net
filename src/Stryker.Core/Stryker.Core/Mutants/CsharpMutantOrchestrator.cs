@@ -6,11 +6,14 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
-using Stryker.Core.Helpers;
-using Stryker.Core.Logging;
+using Stryker.Abstractions;
+using Stryker.Abstractions.Logging;
+using Stryker.Abstractions.Mutants;
+using Stryker.Abstractions.Mutators;
+using Stryker.Abstractions.Options;
 using Stryker.Core.Mutants.CsharpNodeOrchestrators;
 using Stryker.Core.Mutators;
-using Stryker.Core.Options;
+using Stryker.Utilities.Helpers;
 
 namespace Stryker.Core.Mutants;
 
@@ -29,11 +32,11 @@ public class CsharpMutantOrchestrator : BaseMutantOrchestrator<SyntaxTree, Seman
     /// <summary>
     /// <param name="mutators">The mutators that should be active during the mutation process</param>
     /// </summary>
-    public CsharpMutantOrchestrator(MutantPlacer placer, IEnumerable<IMutator> mutators = null, StrykerOptions options = null) : base(options)
+    public CsharpMutantOrchestrator(MutantPlacer placer, IEnumerable<IMutator> mutators = null, IStrykerOptions options = null) : base(options)
     {
         Placer = placer;
         Mutators = mutators ?? DefaultMutatorList();
-        Mutants = new Collection<Mutant>();
+        Mutants = new Collection<IMutant>();
         Logger = ApplicationLogging.LoggerFactory.CreateLogger<CsharpMutantOrchestrator>();
     }
 
@@ -164,12 +167,27 @@ public class CsharpMutantOrchestrator : BaseMutantOrchestrator<SyntaxTree, Seman
     private Mutant CreateNewMutant(Mutation mutation, MutationContext context)
     {
         var mutantIgnored = context.FilteredMutators?.Contains(mutation.Type) ?? false;
-        var mutant = mutation.CreateMutant();
-        mutant.Mutation           = mutation;
-        mutant.ResultStatus       = mutantIgnored ? MutantStatus.Ignored : MutantStatus.Pending;
-        mutant.IsStaticValue      = context.InStaticValue;
-        mutant.ResultStatusReason = mutantIgnored ? context.FilterComment : null;
-        return mutant;
+
+        if (mutation is GeneratedRegexMutation g)
+        {
+            return new GeneratedRegexMutant
+            {
+                Mutation           = mutation,
+                ResultStatus       = mutantIgnored ? MutantStatus.Ignored : MutantStatus.Pending,
+                IsStaticValue      = context.InStaticValue,
+                ResultStatusReason = mutantIgnored ? context.FilterComment : null,
+                OriginalLocation   = g.OriginalLocation,
+                ReplacementText    = g.ReplacementText
+            };
+        }
+
+        return new Mutant
+        {
+            Mutation           = mutation,
+            ResultStatus       = mutantIgnored ? MutantStatus.Ignored : MutantStatus.Pending,
+            IsStaticValue      = context.InStaticValue,
+            ResultStatusReason = mutantIgnored ? context.FilterComment : null
+        };
     }
 
     /// <summary>
