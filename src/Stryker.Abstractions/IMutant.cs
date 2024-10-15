@@ -18,8 +18,5 @@ public interface IMutant : IReadOnlyMutant
     string DisplayName { get; }
     bool MustBeTestedInIsolation { get; set; }
 
-    new string ReplacementText => Mutation.ReplacementNode.ToString();
-    new FileLinePositionSpan OriginalLocation => Mutation.OriginalNode.GetLocation().GetMappedLineSpan();
-
     void AnalyzeTestRun(ITestGuids failedTests, ITestGuids resultRanTests, ITestGuids timedOutTests, bool sessionTimedOut);
 }

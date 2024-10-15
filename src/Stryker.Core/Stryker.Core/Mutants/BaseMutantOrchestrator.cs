@@ -22,7 +22,7 @@ public abstract class BaseMutantOrchestrator
         Options != null && Options.OptimizationMode.HasFlag(OptimizationModes.CoverageBasedTest) &&
         !Options.OptimizationMode.HasFlag(OptimizationModes.CaptureCoveragePerTest);
 
-        public ICollection<IMutant> Mutants { get; set; }
+    public ICollection<IMutant> Mutants { get; set; }
 
     protected int GetNextId() => _idProvider.NextId();
 

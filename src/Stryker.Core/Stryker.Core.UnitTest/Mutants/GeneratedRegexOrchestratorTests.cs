@@ -27,6 +27,7 @@ public partial class GeneratedRegexOrchestratorTests : TestBase
 {
     private readonly CsharpMutantOrchestrator _target;
     private readonly CodeInjection            _injector = new();
+    private readonly CSharpParseOptions       _previewOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
 
     public GeneratedRegexOrchestratorTests() => _target = new CsharpMutantOrchestrator(new MutantPlacer(_injector),
                                                  options: new StrykerOptions
@@ -41,17 +42,28 @@ public partial class GeneratedRegexOrchestratorTests : TestBase
 
     private async Task ShouldMutateSourceToExpectedAsync(string methodName, string actual)
     {
-        var actualNode = _target.Mutate(CSharpSyntaxTree.ParseText(actual, CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview)), null);
+        var actualNode = _target.Mutate(CSharpSyntaxTree.ParseText(actual, _previewOptions), null);
         actual     = (await actualNode.GetRootAsync()).ToFullString();
         actual     = actual.Replace(_injector.HelperNamespace, "StrykerNamespace");
-        actualNode = CSharpSyntaxTree.ParseText(actual);
+        actualNode = CSharpSyntaxTree.ParseText(actual, _previewOptions);
         actualNode.ShouldNotContainErrors();
         await Verifier.Verify(actual, "cs").UseMethodName(methodName).IgnoreParameters();
     }
 
+    private async Task ShouldNotMutateSourceAsync(string actual)
+    {
+        var input = CSharpSyntaxTree.ParseText(actual, _previewOptions);
+        var actualNode = _target.Mutate(input, null);
+        actual     = (await actualNode.GetRootAsync()).ToFullString();
+        actual     = actual.Replace(_injector.HelperNamespace, "StrykerNamespace");
+        actualNode = CSharpSyntaxTree.ParseText(actual);
+        actualNode.ShouldBeSemantically(input);
+        actualNode.ShouldNotContainErrors();
+    }
+
     private async Task ShouldMutateCompiledSourceToExpectedAsync(string methodName, string actual)
     {
-        var cSharpParseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview).WithPreprocessorSymbols("GENERATED_REGEX");
+        var cSharpParseOptions = _previewOptions.WithPreprocessorSymbols("GENERATED_REGEX");
         var syntaxTree = CSharpSyntaxTree.ParseText(actual, cSharpParseOptions);
         var basePath = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
 
@@ -106,6 +118,30 @@ public partial class GeneratedRegexOrchestratorTests : TestBase
                                                   private static partial Regex AbcGeneratedRegex();
                                               }
                                               """],
+        ["SimpleSingleRegexInDedicatedStruct", """
+                                               using System.Text.RegularExpressions;
+                                               namespace StrykerNet.UnitTest.Mutants.TestResources;
+                                               public partial struct R {
+                                                   [GeneratedRegex(@"^abc$", RegexOptions.IgnoreCase, "en-US")]
+                                                   private static partial Regex AbcGeneratedRegex();
+                                               }
+                                               """],
+        ["SimpleSingleRegexInDedicatedRecord", """
+                                               using System.Text.RegularExpressions;
+                                               namespace StrykerNet.UnitTest.Mutants.TestResources;
+                                               public partial record R {
+                                                   [GeneratedRegex(@"^abc$", RegexOptions.IgnoreCase, "en-US")]
+                                                   private static partial Regex AbcGeneratedRegex();
+                                               }
+                                               """],
+        ["SimpleSingleRegexInDedicatedRecordStruct", """
+                                                     using System.Text.RegularExpressions;
+                                                     namespace StrykerNet.UnitTest.Mutants.TestResources;
+                                                     public partial record struct R {
+                                                         [GeneratedRegex(@"^abc$", RegexOptions.IgnoreCase, "en-US")]
+                                                         private static partial Regex AbcGeneratedRegex();
+                                                     }
+                                                     """],
         ["SingleRegexInDedicatedClassNamedParameter", """
                                               using System.Text.RegularExpressions;
                                               namespace StrykerNet.UnitTest.Mutants.TestResources;
@@ -201,7 +237,15 @@ public partial class GeneratedRegexOrchestratorTests : TestBase
                 [GeneratedRegex(@"[xyz][a-c][^xyz][^a-c].\d\D\w\W\s\S\t\r\n\v\f[\b]\0\cM\cJ\x4A\u1234\p{Ll}\P{IsLatinExtended-A}+(?:\p{Sc}|\p{P})\*\\\.^$\b\Bx(?=y)x(?!y)(?<=y)(x)x(?<Name>x)(?:x)\1\k<Name>x*x+x?x{2}x{2,}x{4,5}x*?x+?x??x{2}?x{2,}?x{4,5}?")]
                 private static partial Regex EveryGeneratedRegex();
             }
-            """]
+            """],
+        ["GeneratedRegexProperty", """
+                                   using System.Text.RegularExpressions;
+                                   namespace StrykerNet.UnitTest.Mutants.TestResources;
+                                   public partial class R {
+                                       [GeneratedRegex(@"\b\w{5}\b")]
+                                       private static partial Regex AbcGeneratedRegex { get; }
+                                   }
+                                   """]
     ];
 
     public static IEnumerable<object[]> RequiresCompilationTests =>
@@ -267,6 +311,30 @@ public partial class GeneratedRegexOrchestratorTests : TestBase
                               """]
     ];
 
+    public static IEnumerable<object[]> NoMutationTests =>
+    [
+        [
+            "NoMutationRegex", """
+                               using System.Text.RegularExpressions;
+                               namespace StrykerNet.UnitTest.Mutants.TestResources;
+                               public partial class R {
+                                   [GeneratedRegex(@"a", RegexOptions.IgnoreCase, "en-US")]
+                                   private static partial Regex AbcGeneratedRegex();
+                               }
+                               """
+        ],
+        [
+            "NoMutationInterface", """
+                                   using System.Text.RegularExpressions;
+                                   namespace StrykerNet.UnitTest.Mutants.TestResources;
+                                   public partial interface R {
+                                       [GeneratedRegex(@"a", RegexOptions.IgnoreCase, "en-US")]
+                                       private static partial Regex AbcGeneratedRegex();
+                                   }
+                                   """
+        ]
+    ];
+
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Required for DynamicDataDisplayName")]
     public static string GetCustomDynamicDataDisplayName(MethodInfo methodInfo, object[] data) => $"{data[0]}";
 
@@ -277,6 +345,10 @@ public partial class GeneratedRegexOrchestratorTests : TestBase
     [TestMethod]
     [DynamicData(nameof(RequiresCompilationTests), DynamicDataDisplayName = nameof(GetCustomDynamicDataDisplayName))]
     public Task ShouldMutateGeneratedRegexWithCompilation(string testName, string code) => ShouldMutateCompiledSourceToExpectedAsync(testName, code);
+
+    [TestMethod]
+    [DynamicData(nameof(NoMutationTests), DynamicDataDisplayName = nameof(GetCustomDynamicDataDisplayName))]
+    public Task ShouldNotMutatedMutateGeneratedRegex(string testName, string code) => ShouldNotMutateSourceAsync(code);
 }
 
 public static class StaticSettingsUsage

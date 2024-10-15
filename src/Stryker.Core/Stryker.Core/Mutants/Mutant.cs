@@ -31,6 +31,10 @@ namespace Stryker.Core.Mutants
 
         public string DisplayName => $"{Id}: {Mutation?.DisplayName}";
 
+        public string ReplacementText { get; init; }
+
+        public FileLinePositionSpan OriginalLocation { get; init; }
+
         public void AnalyzeTestRun(ITestGuids failedTests, ITestGuids resultRanTests, ITestGuids timedOutTests, bool sessionTimedOut)
         {
             if (AssessingTests.ContainsAny(failedTests))
@@ -47,14 +51,5 @@ namespace Stryker.Core.Mutants
                 ResultStatus = MutantStatus.Survived;
             }
         }
-    }
-
-    public sealed class GeneratedRegexMutant : Mutant, IMutant
-    {
-        /// <inheritdoc />
-        public string ReplacementText { get; set; }
-
-        /// <inheritdoc />
-        public FileLinePositionSpan OriginalLocation { get; set; }
     }
 }

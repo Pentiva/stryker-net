@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -112,7 +113,6 @@ public class CsharpMutantOrchestrator : BaseMutantOrchestrator<SyntaxTree, Seman
         new ArrayCreationMutator(),
         new StatementMutator(),
         new RegexMutator(),
-        new GeneratedRegexMutator(),
         new NullCoalescingExpressionMutator(),
         new MathMutator(),
         new SwitchExpressionMutator(),
@@ -143,21 +143,28 @@ public class CsharpMutantOrchestrator : BaseMutantOrchestrator<SyntaxTree, Seman
         {
             foreach (var mutation in mutator.Mutate(current, semanticModel, Options))
             {
-                var newMutant = CreateNewMutant(mutation, context);
-                // Skip if the mutant is a duplicate
-                if (IsMutantDuplicate(newMutant, mutation))
+                if (GenerateMutation(context, mutation, mutator.GetType()) is {} m)
                 {
-                    continue;
+                    mutations.Add(m);
                 }
-                newMutant.Id = GetNextId();
-                Logger.LogDebug("Mutant {MutantId} created {OriginalNode} -> {ReplacementNode} using {Mutator}", newMutant.Id, mutation.OriginalNode,
-                    mutation.ReplacementNode, mutator.GetType());
-                Mutants.Add(newMutant);
-                mutations.Add(newMutant);
             }
         }
 
         return mutations;
+    }
+
+    internal Mutant GenerateMutation(MutationContext context, Mutation mutation, Type mutator) {
+        var newMutant = CreateNewMutant(mutation, context);
+        // Skip if the mutant is a duplicate
+        if (IsMutantDuplicate(newMutant, mutation))
+        {
+            return null;
+        }
+        newMutant.Id = GetNextId();
+        Logger.LogDebug("Mutant {MutantId} created {OriginalNode} -> {ReplacementNode} using {Mutator}", newMutant.Id, mutation.OriginalNode,
+                        mutation.ReplacementNode, mutator);
+        Mutants.Add(newMutant);
+        return newMutant;
     }
 
     /// <summary>
@@ -167,26 +174,14 @@ public class CsharpMutantOrchestrator : BaseMutantOrchestrator<SyntaxTree, Seman
     private Mutant CreateNewMutant(Mutation mutation, MutationContext context)
     {
         var mutantIgnored = context.FilteredMutators?.Contains(mutation.Type) ?? false;
-
-        if (mutation is GeneratedRegexMutation g)
-        {
-            return new GeneratedRegexMutant
-            {
-                Mutation           = mutation,
-                ResultStatus       = mutantIgnored ? MutantStatus.Ignored : MutantStatus.Pending,
-                IsStaticValue      = context.InStaticValue,
-                ResultStatusReason = mutantIgnored ? context.FilterComment : null,
-                OriginalLocation   = g.OriginalLocation,
-                ReplacementText    = g.ReplacementText
-            };
-        }
-
         return new Mutant
         {
             Mutation           = mutation,
             ResultStatus       = mutantIgnored ? MutantStatus.Ignored : MutantStatus.Pending,
             IsStaticValue      = context.InStaticValue,
-            ResultStatusReason = mutantIgnored ? context.FilterComment : null
+            ResultStatusReason = mutantIgnored ? context.FilterComment : null,
+            OriginalLocation   = mutation.OriginalLocation ?? mutation.OriginalNode.GetLocation().GetMappedLineSpan(),
+            ReplacementText    = mutation.ReplacementText ?? mutation.ReplacementNode.ToString()
         };
     }
 

@@ -6,14 +6,14 @@ using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
 using Stryker.Abstractions.Logging;
-using Stryker.Core.Mutators;
+using Stryker.Abstractions.Mutants;
+using Stryker.Abstractions.Mutators;
 using Stryker.RegexMutators;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
@@ -31,38 +31,40 @@ internal class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDec
     /// <inheritdoc />
     public override SyntaxNode Mutate(SyntaxNode node, SemanticModel semanticModel, MutationContext context)
     {
-        var toProcess = (node switch
-                            {
-                                ClassDeclarationSyntax cds => cds.Members,
-                                StructDeclarationSyntax sds => sds.Members,
-                                _ => []
-                            })
-                           .Select(a=>(oldNode: a, newNodes: GenerateNewMethods(a, semanticModel)))
-                           .Where(a=>a.newNodes.Count > 0)
-                           .ToImmutableArray();
+        var toProcess = ((TypeDeclarationSyntax)node).Members
+                                                  .Select(a => GenerateNewMethods(a, semanticModel))
+                                                  .Where(static a => a.HasValue)
+                                                  .Select(static a => a.Value)
+                                                  .ToImmutableArray();
 
-        var newNode = node.TrackNodes(toProcess.Select(static a => a.oldNode));
+        node = node.TrackNodes(toProcess.Select(static SyntaxNode (a) => a.OriginalNode));
+        node = base.Mutate(node, semanticModel, context);
 
-        foreach (var valueTuple in toProcess)
+        context = context.Enter(MutationControl.Expression);
+
+        foreach (var (oldNode, marker, newMethods, mutations) in toProcess)
         {
-            newNode = newNode.ReplaceNode(newNode.GetCurrentNode(valueTuple.oldNode)!, valueTuple.newNodes);
+            node = node.ReplaceNode(node.GetCurrentNode<MemberDeclarationSyntax>(oldNode)!, newMethods);
+
+            var l = new List<(Mutant, ExpressionSyntax)>(mutations.Count);
+
+            foreach (var mutation in mutations)
+            {
+                if (context.GenerateMutant(context, mutation, typeof(GeneratedRegexOrchestrator)) is { } m)
+                {
+                    l.Add((m, (ExpressionSyntax)mutation.ReplacementNode));
+                }
+            }
+
+            var nodeToMutate = node.GetAnnotatedNodes(marker).OfType<ExpressionSyntax>().First();
+            node = node.ReplaceNode(nodeToMutate, context.Placer.PlaceExpressionControlledMutations(nodeToMutate, l));
         }
 
-        // Obtain new SemanticModel for modified syntax tree
-        var correctSemanticModel = semanticModel;
-        if (semanticModel is not null)
-        {
-            var tempAnnotation = new SyntaxAnnotation(Guid.NewGuid().ToString("N"));
-            newNode = newNode.WithAdditionalAnnotations(tempAnnotation);
-            var newSyntaxTree = node.SyntaxTree.GetRoot().ReplaceNode(node, newNode).SyntaxTree;
-            correctSemanticModel = semanticModel.Compilation.AddSyntaxTrees(newSyntaxTree).GetSemanticModel(newSyntaxTree);
-            newNode = newSyntaxTree.GetRoot().GetAnnotatedNodes(tempAnnotation).First();
-        }
-
-        return base.Mutate(newNode, correctSemanticModel, context);
+        context.Leave();
+        return node;
     }
 
-    private IReadOnlyCollection<SyntaxNode> GenerateNewMethods(MemberDeclarationSyntax method, SemanticModel semanticModel)
+    private RegexMutationBatch? GenerateNewMethods(MemberDeclarationSyntax method, SemanticModel semanticModel)
     {
         var mpds = method switch
         {
@@ -75,29 +77,33 @@ internal class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDec
 
         if (regexAttribute is null)
         {
-            return [];
+            return null;
         }
 
-        var regexMutations = GenerateNewMethods(mpds, regexAttribute, semanticModel).ToArray();
+        var marker = new SyntaxAnnotation(Guid.NewGuid().ToString());
+        var (proxyMethod, renamedMethod, nodeToMutate) = MutatePartialRegexMethod(mpds, marker);
+
+        var regexMutations = GenerateNewMethods(mpds, regexAttribute, semanticModel, nodeToMutate).ToArray();
 
         if (regexMutations.Length == 0)
         {
-            return [];
+            return null;
         }
 
-        var (proxyMethod, renamedMethod) =
-            MutatePartialRegexMethod(mpds, regexMutations.Select(static a => a.annotation));
-
-        return
-        [
-            proxyMethod,
-            renamedMethod,
-            ..regexMutations.OrderBy(a=>a.name).Select(static a => a.newMethod)
-        ];
+        return new RegexMutationBatch(mpds,
+                                      marker,
+                                      [
+                                          proxyMethod,
+                                          renamedMethod,
+                                          ..regexMutations.OrderBy(static a => a.Name).Select(static a => a.NewMethod)
+                                      ],
+                                      [..regexMutations.OrderBy(static a => a.Name).Select(static a => a.Mutation)]);
     }
 
-    private IEnumerable<(string name, SyntaxAnnotation annotation, MethodOrPropertyDeclarationSyntax newMethod)> GenerateNewMethods(
-        MethodOrPropertyDeclarationSyntax method, AttributeSyntax regexAttribute, SemanticModel model)
+    private IEnumerable<AdditionalRegexMethodInfo> GenerateNewMethods(MethodOrPropertyDeclarationSyntax method,
+                                                                      AttributeSyntax                   regexAttribute,
+                                                                      SemanticModel                     model,
+                                                                      ExpressionSyntax                  nodeToMutate)
     {
         var arguments = regexAttribute.ArgumentList?.Arguments;
 
@@ -119,7 +125,8 @@ internal class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDec
             }
             else
             {
-                currentValue = (model.GetSymbolInfo(patternExpression).Symbol as IFieldSymbol)?.OriginalDefinition.ConstantValue as string;
+                currentValue = (model.GetSymbolInfo(patternExpression).Symbol as IFieldSymbol)?.OriginalDefinition
+                           .ConstantValue as string;
             }
         }
 
@@ -137,7 +144,7 @@ internal class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDec
         {
             yield break;
         }
-        
+
         var patternExpressionLineSpan = patternExpression.GetLocation().GetLineSpan();
         var regexMutantOrchestrator = new RegexMutantOrchestrator(currentValue);
         var replacementValues = regexMutantOrchestrator.Mutate();
@@ -158,77 +165,106 @@ internal class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDec
 
             var hashData = SHA1.HashData(Encoding.UTF8.GetBytes(regexMutation.ReplacementPattern));
             var hash = Convert.ToBase64String(hashData).Replace('+', 'A').Replace('/', 'B').Replace('=', 'C');
-            var newName = $"{method.Identifier.ValueText}_{CultureInfo.InvariantCulture.TextInfo.ToTitleCase(regexMutation.DisplayName).Replace(" ", "")}_{hash}";
+
+            var newName =
+                $"{method.Identifier.ValueText}_{CultureInfo.InvariantCulture.TextInfo.ToTitleCase(regexMutation.DisplayName).Replace(" ", "")}_{hash}";
+
+            SyntaxNode replacementNode = nodeToMutate is InvocationExpressionSyntax
+                                             ? InvocationExpression(IdentifierName(newName), ArgumentList())
+                                             : IdentifierName(newName);
 
             yield return
-                (newName, 
-                 new SyntaxAnnotation(GeneratedRegexMutator.MarkerAnnotationKind, JsonSerializer.Serialize(new GeneratedRegexMutator.GeneratedRegexMutationInfo(DisplayName: regexMutation.DisplayName, OriginalLocation: patternExpressionLineSpan, ReplacementText: $"\"{regexMutation.ReplacementPattern}\"", Description: regexMutation.Description, NewName: newName), GeneratedRegexMutatorContext.Default.GeneratedRegexMutationInfo)),
-                 IfDirectiveRemover.Instance.Visit(method.ReplaceNode(patternExpression,
-                                                       LiteralExpression(SyntaxKind.StringLiteralExpression,
-                                                                         Literal(regexMutation.ReplacementPattern)))
-                                       .WithIdentifier(Identifier(newName))));
+                new AdditionalRegexMethodInfo(newName,
+                                              new Mutation
+                                              {
+                                                  OriginalNode     = nodeToMutate,
+                                                  ReplacementNode  = replacementNode,
+                                                  DisplayName      = regexMutation.DisplayName,
+                                                  Type             = Mutator.Regex,
+                                                  Description      = regexMutation.Description,
+                                                  ReplacementText  = $"\"{regexMutation.ReplacementPattern}\"",
+                                                  OriginalLocation = patternExpressionLineSpan
+                                              },
+                                              method.ReplaceNode(patternExpression,
+                                                                 LiteralExpression(SyntaxKind.StringLiteralExpression,
+                                                                  Literal(regexMutation.ReplacementPattern)))
+                                                 .WithIdentifier(Identifier(newName))
+                                                 .RemoveIfDirectives());
         }
     }
 
-    /// <summary>
-    ///     Convert partial regex marker method into a real method and a new regex marker method with a new name
-    /// </summary>
-    /// <param name="originalMethod"></param>
-    /// <param name="annotations"></param>
-    /// <returns></returns>
-    private static (MethodOrPropertyDeclarationSyntax proxyMethod, MethodOrPropertyDeclarationSyntax renamedMethod)
-        MutatePartialRegexMethod(MethodOrPropertyDeclarationSyntax originalMethod, IEnumerable<SyntaxAnnotation> annotations)
+    private static ProxyInfo MutatePartialRegexMethod(MethodOrPropertyDeclarationSyntax originalMethod,
+                                                      SyntaxAnnotation                  marker)
     {
         var newName = Identifier($"{originalMethod.Identifier.ValueText}_Original");
 
         var regexAttribute = originalMethod.GetRegexAttribute();
 
+        var nodeToMutate = originalMethod.CreateCall(newName).WithAdditionalAnnotations(marker);
+
         var proxyMethod = originalMethod
                       .RemoveNode(regexAttribute, SyntaxRemoveOptions.KeepNoTrivia)!
-                      .WithExpressionBody(ArrowExpressionClause(Token(TriviaList(Space), SyntaxKind.EqualsGreaterThanToken, TriviaList(Space)), originalMethod.CreateCall(newName).WithAdditionalAnnotations(annotations)))
-                      .WithSemicolonToken(Token(SyntaxTriviaList.Empty, SyntaxKind.SemicolonToken, ";", ";", TriviaList(LineFeed)))
+                      .WithExpressionBody(ArrowExpressionClause(Token(TriviaList(Space), SyntaxKind.EqualsGreaterThanToken, TriviaList(Space)),
+                                                                nodeToMutate))
+                      .WithSemicolonToken(Token(SyntaxTriviaList.Empty, SyntaxKind.SemicolonToken, ";", ";",
+                                                TriviaList(LineFeed)))
                       .WithModifiers(originalMethod.Modifiers.Remove(originalMethod.Modifiers.First(static a =>
-                                                                                                        a.IsKind(SyntaxKind.PartialKeyword))));
+                                                                         a.IsKind(SyntaxKind.PartialKeyword))));
 
         proxyMethod = proxyMethod.RemoveNodes(proxyMethod.AttributeLists.Where(static a => a.Attributes.Count == 0),
                                               SyntaxRemoveOptions.KeepNoTrivia)!.WithTriviaFrom(regexAttribute.Parent);
-        var newMethod = IfDirectiveRemover.Instance.Visit(originalMethod.WithIdentifier(newName));
+        var newMethod = originalMethod.WithIdentifier(newName).RemoveIfDirectives();
 
-        return (proxyMethod, newMethod);
+        return new ProxyInfo(proxyMethod, newMethod, nodeToMutate);
     }
-}
 
-sealed file class IfDirectiveRemover() : CSharpSyntaxRewriter(visitIntoStructuredTrivia: true)
-{
-    public static IfDirectiveRemover Instance { get; } = new();
+    /// <summary>
+    ///     Contains info about the modification of the original regex method/property that is now proxied through a method
+    ///     that can be mutated.
+    /// </summary>
+    /// <param name="ProxyMethod">
+    ///     The method that the original code calls, which was a method marked with a
+    ///     <see cref="GeneratedRegexAttribute" /> that has now been removed. Body is now an invocation of
+    ///     <see cref="RenamedMethod" />
+    /// </param>
+    /// <param name="RenamedMethod">A copy of the original method, with a new name</param>
+    /// <param name="NodeToMutate">
+    ///     The call from <see cref="ProxyMethod" /> to <see cref="RenamedMethod" /> that will be the
+    ///     code that is mutated
+    /// </param>
+    private record struct ProxyInfo(
+        MethodOrPropertyDeclarationSyntax ProxyMethod,
+        MethodOrPropertyDeclarationSyntax RenamedMethod,
+        ExpressionSyntax                  NodeToMutate);
 
-    /// <inheritdoc />
-    public override SyntaxNode VisitIfDirectiveTrivia(IfDirectiveTriviaSyntax node) => null;
+    /// <summary>
+    ///     Contains info about a mutation to be applied, along with the method that the mutation will use.
+    /// </summary>
+    /// <param name="Name">The full name of the generated method</param>
+    /// <param name="Mutation">The <see cref="Abstractions.Mutants.Mutation" /> to apply</param>
+    /// <param name="NewMethod">A copy of the original regex method with a <see cref="RegexMutation" /> applied</param>
+    private record struct AdditionalRegexMethodInfo(
+        string                            Name,
+        Mutation                          Mutation,
+        MethodOrPropertyDeclarationSyntax NewMethod);
 
-    /// <inheritdoc />
-    public override SyntaxNode VisitElseDirectiveTrivia(ElseDirectiveTriviaSyntax node) => null;
-
-    /// <inheritdoc />
-    public override SyntaxNode VisitElifDirectiveTrivia(ElifDirectiveTriviaSyntax node) => null;
-
-    public MethodOrPropertyDeclarationSyntax Visit(MethodOrPropertyDeclarationSyntax mpds) =>
-        base.Visit(mpds) switch
-        {
-            MethodDeclarationSyntax mds => mds,
-            PropertyDeclarationSyntax pds => pds,
-            _ => mpds
-        };
+    /// <summary>
+    ///     All info needed about the mutations for a single <see cref="GeneratedRegexAttribute" />.
+    /// </summary>
+    /// <param name="OriginalNode">The original method or property marked with a <see cref="GeneratedRegexAttribute" /></param>
+    /// <param name="Marker">The marker of the node to mutate</param>
+    /// <param name="NewMethods">All the new methods to be inserted into the code</param>
+    /// <param name="Mutations">All the mutations in to apply to this batch</param>
+    private record struct RegexMutationBatch(
+        MethodOrPropertyDeclarationSyntax OriginalNode,
+        SyntaxAnnotation                  Marker,
+        IReadOnlyCollection<SyntaxNode>   NewMethods,
+        IReadOnlyCollection<Mutation>     Mutations);
 }
 
 internal sealed class MethodOrPropertyDeclarationSyntax
 {
     private readonly MemberDeclarationSyntax _memberDeclaration;
-
-    public MethodOrPropertyDeclarationSyntax(MethodDeclarationSyntax memberDeclaration) =>
-        _memberDeclaration = memberDeclaration;
-
-    public MethodOrPropertyDeclarationSyntax(PropertyDeclarationSyntax memberDeclaration) =>
-        _memberDeclaration = memberDeclaration;
 
     public SyntaxToken Identifier => _memberDeclaration switch
     {
@@ -250,6 +286,12 @@ internal sealed class MethodOrPropertyDeclarationSyntax
         PropertyDeclarationSyntax pds => pds.AttributeLists,
         _ => throw new UnreachableException()
     };
+
+    public MethodOrPropertyDeclarationSyntax(MethodDeclarationSyntax memberDeclaration) =>
+        _memberDeclaration = memberDeclaration;
+
+    public MethodOrPropertyDeclarationSyntax(PropertyDeclarationSyntax memberDeclaration) =>
+        _memberDeclaration = memberDeclaration;
 
     public MethodOrPropertyDeclarationSyntax WithIdentifier(SyntaxToken identifier) => _memberDeclaration switch
     {
@@ -282,7 +324,8 @@ internal sealed class MethodOrPropertyDeclarationSyntax
             _ => throw new UnreachableException()
         };
 
-    public MethodOrPropertyDeclarationSyntax WithExpressionBody(ArrowExpressionClauseSyntax arrowExpressionClauseSyntax) => _memberDeclaration switch
+    public MethodOrPropertyDeclarationSyntax
+        WithExpressionBody(ArrowExpressionClauseSyntax arrowExpressionClauseSyntax) => _memberDeclaration switch
     {
         MethodDeclarationSyntax mds => mds.WithExpressionBody(arrowExpressionClauseSyntax),
         PropertyDeclarationSyntax pds => pds.WithExpressionBody(arrowExpressionClauseSyntax).WithAccessorList(default),
@@ -319,6 +362,8 @@ internal sealed class MethodOrPropertyDeclarationSyntax
             _ => throw new UnreachableException()
         };
 
+    public MethodOrPropertyDeclarationSyntax RemoveIfDirectives() => IfDirectiveRemover.Instance.Visit(this);
+
     public AttributeSyntax GetRegexAttribute()
     {
         if (!Modifiers.Any(static a => a.IsKind(SyntaxKind.PartialKeyword)))
@@ -327,7 +372,7 @@ internal sealed class MethodOrPropertyDeclarationSyntax
         }
 
         return AttributeLists.SelectMany(static a => a.Attributes)
-                             .FirstOrDefault(static a => a.Name is IdentifierNameSyntax
+                          .FirstOrDefault(static a => a.Name is IdentifierNameSyntax
                               {
                                   Identifier.Value: "GeneratedRegex" or "GeneratedRegexAttribute"
                               });
@@ -339,4 +384,26 @@ internal sealed class MethodOrPropertyDeclarationSyntax
 
     public static implicit operator MemberDeclarationSyntax(MethodOrPropertyDeclarationSyntax mpds) =>
         mpds._memberDeclaration;
+
+    private sealed class IfDirectiveRemover() : CSharpSyntaxRewriter(true)
+    {
+        public static IfDirectiveRemover Instance { get; } = new();
+
+        /// <inheritdoc />
+        public override SyntaxNode VisitIfDirectiveTrivia(IfDirectiveTriviaSyntax node) => null;
+
+        /// <inheritdoc />
+        public override SyntaxNode VisitElseDirectiveTrivia(ElseDirectiveTriviaSyntax node) => null;
+
+        /// <inheritdoc />
+        public override SyntaxNode VisitElifDirectiveTrivia(ElifDirectiveTriviaSyntax node) => null;
+
+        public MethodOrPropertyDeclarationSyntax Visit(MethodOrPropertyDeclarationSyntax mpds) =>
+            base.Visit(mpds) switch
+            {
+                MethodDeclarationSyntax mds => mds,
+                PropertyDeclarationSyntax pds => pds,
+                _ => throw new UnreachableException()
+            };
+    }
 }

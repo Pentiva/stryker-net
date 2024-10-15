@@ -14,12 +14,9 @@ namespace Stryker.Abstractions.Mutants
         public string DisplayName { get; set; }
         public Mutator Type { get; set; }
         public string Description { get; set; }
-    }
 
-    public sealed class GeneratedRegexMutation : Mutation
-    {
-        public string ReplacementText { get; set; }
+        public string? ReplacementText { get; set; }
 
-        public FileLinePositionSpan OriginalLocation { get; set; }
+        public FileLinePositionSpan? OriginalLocation { get; set; }
     }
 }
