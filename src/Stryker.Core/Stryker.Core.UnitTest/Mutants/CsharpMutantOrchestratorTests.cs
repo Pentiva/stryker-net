@@ -1001,13 +1001,13 @@ if(StrykerNamespace.MutantControl.IsActive(7)){	x*=2;
 
     [TestMethod]
     [DataRow("/* Stryker disable once all*/ x++;", "/* Stryker disable once all*/ x++;")]
-    [DataRow("if (cond) /* Stryker disable once all*/ x++;", "if ((StrykerNamespace.MutantControl.IsActive(1)?!(cond):cond)) /* Stryker disable once all*/ x++;")]
-    [DataRow("if (cond);/* Stryker disable once all*/ else x++;", "if ((StrykerNamespace.MutantControl.IsActive(1)?!(cond):cond));/* Stryker disable once all*/ else x++;")]
+    [DataRow("if (cond) /* Stryker disable once all*/ x++;", "if ((StrykerNamespace.MutantControl.IsActive(2)?!(cond):cond)) /* Stryker disable once all*/ x++;")]
+    [DataRow("if (cond);/* Stryker disable once all*/ else x++;", "if ((StrykerNamespace.MutantControl.IsActive(2)?!(cond):cond));/* Stryker disable once all*/ else x++;")]
     [DataRow(@"if (cond) // Stryker disable once all
 x++;",
-        @"if ((StrykerNamespace.MutantControl.IsActive(1)?!(cond):cond)) // Stryker disable once all
+             @"if ((StrykerNamespace.MutantControl.IsActive(2)?!(cond):cond)) // Stryker disable once all
 x++;")]
-    [DataRow("if (/* Stryker disable once all*/cond) x++;", "if (/* Stryker disable once all*/cond) if(StrykerNamespace.MutantControl.IsActive(2)){;}else{if(StrykerNamespace.MutantControl.IsActive(3)){x--;}else{x++;}}")]
+    [DataRow("if (/* Stryker disable once all*/cond) x++;", "if (/* Stryker disable once all*/cond) if(StrykerNamespace.MutantControl.IsActive(3)){;}else{if(StrykerNamespace.MutantControl.IsActive(4)){x--;}else{x++;}}")]
     
     public void ShouldNotMutateDependingOnWhereMultilineCommentIs(string source, string expected)
     {
@@ -1017,7 +1017,7 @@ x++;")]
 	{source}
 }}";
         var expectedTemplate = $@"public void SomeMethod() {{if(StrykerNamespace.MutantControl.IsActive(0)){{}}else{{
-	var x = 0;
+	var x = (StrykerNamespace.MutantControl.IsActive(1)?42:0);
 {expected}
  }}}}";
 
@@ -1201,13 +1201,13 @@ if(StrykerNamespace.MutantControl.IsActive(4)){// Stryker restore all
 
         ShouldMutateSourceInClassToExpected(source, expected);
 
-        _target.Mutants.Count.ShouldBe(7);
+        Target.Mutants.Count.ShouldBe(7);
         Target.Mutants.ElementAt(0).ResultStatus.ShouldBe(MutantStatus.Pending);
         Target.Mutants.ElementAt(2).ResultStatus.ShouldBe(MutantStatus.Ignored);
         Target.Mutants.ElementAt(2).ResultStatusReason.ShouldBe("comment");
-        _target.Mutants.ElementAt(3).ResultStatus.ShouldBe(MutantStatus.Ignored);
-        _target.Mutants.ElementAt(3).ResultStatusReason.ShouldBe("comment");
-        _target.Mutants.ElementAt(4).ResultStatus.ShouldBe(MutantStatus.Pending);
+        Target.Mutants.ElementAt(3).ResultStatus.ShouldBe(MutantStatus.Ignored);
+        Target.Mutants.ElementAt(3).ResultStatusReason.ShouldBe("comment");
+        Target.Mutants.ElementAt(4).ResultStatus.ShouldBe(MutantStatus.Pending);
     }
 
     [TestMethod]
