@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 namespace StrykerNet.UnitTest.Mutants.TestResources;
 public partial class R {
   public partial class R2 {

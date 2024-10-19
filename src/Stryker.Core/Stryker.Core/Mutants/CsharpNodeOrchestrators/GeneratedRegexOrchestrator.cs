@@ -42,17 +42,21 @@ internal class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDec
 
         context = context.Enter(MutationControl.Expression);
 
-        foreach (var (oldNode, marker, newMethods, mutations) in toProcess)
+        foreach (var (oldNode, marker, (proxyMethod, renamedMethod, _), mutations2) in toProcess)
         {
-            node = node.ReplaceNode(node.GetCurrentNode<MemberDeclarationSyntax>(oldNode)!, newMethods);
+            node = node.ReplaceNode(node.GetCurrentNode<MemberDeclarationSyntax>(oldNode)!, [
+                proxyMethod,
+                renamedMethod,
+                ..mutations2.OrderBy(static a => a.Name).Select(static a => a.NewMethod)
+            ]);
 
-            var l = new List<(Mutant, ExpressionSyntax)>(mutations.Count);
+            var l = new List<(Mutant, ExpressionSyntax)>(mutations2.Length);
 
-            foreach (var mutation in mutations)
+            foreach (var mutation in mutations2.OrderBy(static a => a.Name))
             {
-                if (context.GenerateMutant(context, mutation, typeof(GeneratedRegexOrchestrator)) is { } m)
+                if (context.GenerateMutant(context, mutation.Mutation, typeof(GeneratedRegexOrchestrator)) is { } m)
                 {
-                    l.Add((m, (ExpressionSyntax)mutation.ReplacementNode));
+                    l.Add((m, (ExpressionSyntax)mutation.Mutation.ReplacementNode));
                 }
             }
 
@@ -81,26 +85,19 @@ internal class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDec
         }
 
         var marker = new SyntaxAnnotation(Guid.NewGuid().ToString());
-        var (proxyMethod, renamedMethod, nodeToMutate) = MutatePartialRegexMethod(mpds, marker);
+        var proxyInfo = MutatePartialRegexMethod(mpds, marker);
 
-        var regexMutations = GenerateNewMethods(mpds, regexAttribute, semanticModel, nodeToMutate).ToArray();
+        var regexMutations = GenerateNewMethods(mpds, regexAttribute, semanticModel, proxyInfo.NodeToMutate).ToArray();
 
         if (regexMutations.Length == 0)
         {
             return null;
         }
 
-        return new RegexMutationBatch(mpds,
-                                      marker,
-                                      [
-                                          proxyMethod,
-                                          renamedMethod,
-                                          ..regexMutations.OrderBy(static a => a.Name).Select(static a => a.NewMethod)
-                                      ],
-                                      [..regexMutations.OrderBy(static a => a.Name).Select(static a => a.Mutation)]);
+        return new RegexMutationBatch(mpds, marker, proxyInfo, regexMutations);
     }
 
-    private IEnumerable<AdditionalRegexMethodInfo> GenerateNewMethods(MethodOrPropertyDeclarationSyntax method,
+    private IEnumerable<MutationInfo> GenerateNewMethods(MethodOrPropertyDeclarationSyntax method,
                                                                       AttributeSyntax                   regexAttribute,
                                                                       SemanticModel                     model,
                                                                       ExpressionSyntax                  nodeToMutate)
@@ -167,14 +164,14 @@ internal class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDec
             var hash = Convert.ToBase64String(hashData).Replace('+', 'A').Replace('/', 'B').Replace('=', 'C');
 
             var newName =
-                $"{method.Identifier.ValueText}_{CultureInfo.InvariantCulture.TextInfo.ToTitleCase(regexMutation.DisplayName).Replace(" ", "")}_{hash}";
+                $"{method.Identifier.ValueText}_{CultureInfo.InvariantCulture.TextInfo.ToTitleCase(regexMutation.DisplayName.Replace("\"[\\w\\W]\"", "AnyChar").Replace("-", "")).Replace(" ", "")}_{hash}";
 
             SyntaxNode replacementNode = nodeToMutate is InvocationExpressionSyntax
                                              ? InvocationExpression(IdentifierName(newName), ArgumentList())
                                              : IdentifierName(newName);
 
             yield return
-                new AdditionalRegexMethodInfo(newName,
+                new MutationInfo(newName,
                                               new Mutation
                                               {
                                                   OriginalNode     = nodeToMutate,
@@ -243,7 +240,7 @@ internal class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDec
     /// <param name="Name">The full name of the generated method</param>
     /// <param name="Mutation">The <see cref="Abstractions.Mutants.Mutation" /> to apply</param>
     /// <param name="NewMethod">A copy of the original regex method with a <see cref="RegexMutation" /> applied</param>
-    private record struct AdditionalRegexMethodInfo(
+    private record struct MutationInfo(
         string                            Name,
         Mutation                          Mutation,
         MethodOrPropertyDeclarationSyntax NewMethod);
@@ -253,13 +250,13 @@ internal class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDec
     /// </summary>
     /// <param name="OriginalNode">The original method or property marked with a <see cref="GeneratedRegexAttribute" /></param>
     /// <param name="Marker">The marker of the node to mutate</param>
-    /// <param name="NewMethods">All the new methods to be inserted into the code</param>
-    /// <param name="Mutations">All the mutations in to apply to this batch</param>
+    /// <param name="ProxyInfo">The <see cref="GeneratedRegexOrchestrator.ProxyInfo"/> for this batch of mutations</param>
+    /// <param name="Mutations">All of the <see cref="MutationInfo"/>s for this batch</param>
     private record struct RegexMutationBatch(
         MethodOrPropertyDeclarationSyntax OriginalNode,
         SyntaxAnnotation                  Marker,
-        IReadOnlyCollection<SyntaxNode>   NewMethods,
-        IReadOnlyCollection<Mutation>     Mutations);
+        ProxyInfo                         ProxyInfo,
+        MutationInfo[]                    Mutations);
 }
 
 internal sealed class MethodOrPropertyDeclarationSyntax
