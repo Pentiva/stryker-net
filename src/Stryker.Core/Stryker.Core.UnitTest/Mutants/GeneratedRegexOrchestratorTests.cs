@@ -308,7 +308,20 @@ public partial class GeneratedRegexOrchestratorTests : TestBase
                                   private static partial Regex AbcGeneratedRegex();
                               #endif
                               }
-                              """]
+                              """],
+        ["OtherMutations", """
+             using System.Text.RegularExpressions;
+             namespace StrykerNet.UnitTest.Mutants.TestResources;
+             public partial class R {
+                 [GeneratedRegex(@"^abc$", RegexOptions.IgnoreCase, "en-US")]
+                 private static partial Regex AbcGeneratedRegex();
+                 
+                 public void M() {
+                    var toMutate = "a string is here";
+                    var mutation2 = toMutate.PadLeft(5);
+                 }
+             }
+             """]
     ];
 
     public static IEnumerable<object[]> NoMutationTests =>

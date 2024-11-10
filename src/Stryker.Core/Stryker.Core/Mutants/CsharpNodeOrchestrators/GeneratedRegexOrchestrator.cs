@@ -19,9 +19,11 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Stryker.Core.Mutants.CsharpNodeOrchestrators;
 
-internal class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDeclarationSyntax>
+internal sealed class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDeclarationSyntax>
 {
     private ILogger Logger { get; } = ApplicationLogging.LoggerFactory.CreateLogger<GeneratedRegexOrchestrator>();
+
+    private static readonly SyntaxAnnotation _tempAnnotationMarker = new (Guid.NewGuid().ToString("N"));
 
     /// <inheritdoc />
     protected override bool CanHandle(TypeDeclarationSyntax t) =>
@@ -37,9 +39,28 @@ internal class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<TypeDec
                                                   .Select(static a => a.Value)
                                                   .ToImmutableArray();
 
-        node = node.TrackNodes(toProcess.Select(static SyntaxNode (a) => a.OriginalNode));
-        node = base.Mutate(node, semanticModel, context);
+        if (toProcess.Length == 0)
+        {
+            return base.Mutate(node, semanticModel, context);
+        }
 
+        var originalNode = node;
+        var correctSemanticModel = semanticModel;
+
+        node = node.TrackNodes(toProcess.Select(static SyntaxNode (a) => a.OriginalNode)).WithAdditionalAnnotations(_tempAnnotationMarker);
+
+        if (semanticModel is not null)
+        {
+            // Obtain new SemanticModel for modified syntax tree
+            var newSyntaxTree = originalNode.SyntaxTree.GetRoot().ReplaceNode(originalNode, node).SyntaxTree;
+            correctSemanticModel = semanticModel.Compilation.AddSyntaxTrees(newSyntaxTree).GetSemanticModel(newSyntaxTree);
+            node = newSyntaxTree.GetRoot().GetAnnotatedNodes(_tempAnnotationMarker).First();
+        }
+
+        return InnerMutate(base.Mutate(node, correctSemanticModel, context), context, toProcess);
+    }
+
+    private static SyntaxNode InnerMutate(SyntaxNode node, MutationContext context, ImmutableArray<RegexMutationBatch> toProcess) {
         context = context.Enter(MutationControl.Expression);
 
         foreach (var (oldNode, marker, (proxyMethod, renamedMethod, _), mutations2) in toProcess)
