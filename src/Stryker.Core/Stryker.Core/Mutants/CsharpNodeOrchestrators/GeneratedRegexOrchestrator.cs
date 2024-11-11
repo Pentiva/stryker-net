@@ -23,7 +23,7 @@ internal sealed class GeneratedRegexOrchestrator : MemberDefinitionOrchestrator<
 {
     private ILogger Logger { get; } = ApplicationLogging.LoggerFactory.CreateLogger<GeneratedRegexOrchestrator>();
 
-    private static readonly SyntaxAnnotation _tempAnnotationMarker = new (Guid.NewGuid().ToString("N"));
+    private static readonly SyntaxAnnotation _tempAnnotationMarker = new (Guid.NewGuid().ToString());
 
     /// <inheritdoc />
     protected override bool CanHandle(TypeDeclarationSyntax t) =>

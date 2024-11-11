@@ -7,10 +7,9 @@ using Stryker.Utilities;
 
 namespace Stryker.Abstractions.Options;
 
-public readonly struct ExclusionPattern : IExclusionPattern
+public readonly partial struct ExclusionPattern : IExclusionPattern
 {
-    private static readonly Regex _mutantSpanGroupRegex = new("(\\{(\\d+)\\.\\.(\\d+)\\})+$");
-    private static readonly Regex _mutantSpanRegex = new Regex("\\{(\\d+)\\.\\.(\\d+)\\}");
+    private static readonly Regex _mutantSpanRegex = MutantSpanRegex();
 
     public ExclusionPattern(string s)
     {
@@ -22,7 +21,7 @@ public readonly struct ExclusionPattern : IExclusionPattern
         IsExcluded = s.StartsWith('!');
 
         var pattern = IsExcluded ? s[1..] : s;
-        var mutantSpansRegex = _mutantSpanGroupRegex.Match(pattern);
+        var mutantSpansRegex = MutantSpanGroupRegex().Match(pattern);
         if (mutantSpansRegex.Success)
         {
             var filePathPart = pattern[..^mutantSpansRegex.Length];
@@ -46,4 +45,10 @@ public readonly struct ExclusionPattern : IExclusionPattern
     public Glob Glob { get; }
 
     public IEnumerable<(int Start, int End)> MutantSpans { get; }
+
+    [GeneratedRegex(@"(\{(\d+)\.\.(\d+)\})+$")]
+    private static partial Regex MutantSpanGroupRegex();
+
+    [GeneratedRegex(@"\{(\d+)\.\.(\d+)\}")]
+    private static partial Regex MutantSpanRegex();
 }

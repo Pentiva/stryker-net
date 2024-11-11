@@ -345,6 +345,13 @@ public partial class GeneratedRegexOrchestratorTests : TestBase
                                        private static partial Regex AbcGeneratedRegex();
                                    }
                                    """
+        ],
+        [
+            "EmptyPartialClass", """
+                                 namespace StrykerNet.UnitTest.Mutants.TestResources;
+                                 public partial class R {
+                                 }
+                                 """
         ]
     ];
 
