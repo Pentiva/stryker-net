@@ -1,4 +1,3 @@
-using Microsoft.CodeAnalysis;
 using Stryker.Abstractions.TestRunners;
 
 namespace Stryker.Abstractions.Mutants;
