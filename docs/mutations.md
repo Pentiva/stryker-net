@@ -173,6 +173,8 @@ Do you have a suggestion for a (new) mutator? Feel free to create an [issue](htt
 | `ElementAt()`          | `'\0'`               |
 | `ElementAtOrDefault()` | `'\0'`               |
 | `EndsWith()`           | `StartsWith()`       |
+| `IndexOf()`            | `LastIndexOf()`      |
+| `LastIndexOf()`        | `IndexOf()`          |
 | `PadLeft()`            | `PadRight()`         |
 | `PadRight()`           | `PadLeft()`          |
 | `StartsWith()`         | `EndsWith()`         |
@@ -262,3 +264,9 @@ For the full list of all available regex mutations, see the [regex mutator docs]
 |---------------------|---------------------|
 | `x ? a : b`         | `true ? a : b`      |
 | `x ? a : b`         | `false ? a : b`     |
+
+## Collection Expressions (_collectionexpression_)
+| Original            | Mutated     |
+|---------------------|-------------|
+| `[]`                | `[default]` |
+| `[1, 2, 3]`         | `[]`        |
